@@ -3,6 +3,9 @@
 import Link from 'next/link';
 import { useState } from 'react';
 
+// 빌드 시 정적 생성 방지
+export const dynamic = 'force-dynamic';
+
 interface Product {
   id: number;
   title: string;

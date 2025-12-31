@@ -84,12 +84,12 @@ export default function ChatPage() {
   }));
 
   const handleShowProfile = useCallback(async () => {
-    if (!chatId) return;
+    if (!chatId || !db) return;
     const mentor = chatInfo[chatId];
     if (!mentor) return;
 
     try {
-      const messagesRef = collection(db, 'chats', chatId, 'messages');
+      const messagesRef = collection(db!, 'chats', chatId, 'messages');
       await addDoc(messagesRef, {
         text: `📋 ${mentor.name} 멘토님의 프로필\n\n직무: ${mentor.field}\n회사: ${mentor.company}\n경력: ${mentor.experience}\n\n${mentor.description}`,
         sender: 'other',
@@ -108,7 +108,7 @@ export default function ChatPage() {
     if (questions.length === 0) return;
 
     try {
-      const messagesRef = collection(db, 'chats', chatId, 'messages');
+      const messagesRef = collection(db!, 'chats', chatId, 'messages');
       const questionText = `💡 추천 질문 리스트\n\n${questions.map((q, i) => `${i + 1}. ${q}`).join('\n\n')}`;
       await addDoc(messagesRef, {
         text: questionText,
@@ -126,7 +126,7 @@ export default function ChatPage() {
   useEffect(() => {
     if (!chatId || !db) return;
 
-    const messagesRef = collection(db, 'chats', chatId, 'messages');
+    const messagesRef = collection(db!, 'chats', chatId, 'messages');
     const q = query(messagesRef, orderBy('timestamp', 'asc'));
 
     const unsubscribe = onSnapshot(q, async (snapshot) => {
@@ -170,7 +170,7 @@ export default function ChatPage() {
     if (inputText.trim() === '' || !chatId || !db) return;
 
     try {
-      const messagesRef = collection(db, 'chats', chatId, 'messages');
+      const messagesRef = collection(db!, 'chats', chatId, 'messages');
       await addDoc(messagesRef, {
         text: inputText,
         sender: 'me',

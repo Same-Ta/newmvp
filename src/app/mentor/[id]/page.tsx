@@ -3,6 +3,9 @@
 import Link from 'next/link';
 import { useParams, useRouter } from 'next/navigation';
 
+// 빌드 시 정적 생성 방지
+export const dynamic = 'force-dynamic';
+
 // 멘토 데이터 (chatId와 동일한 구조)
 const mentorData: { [key: string]: {
   name: string;

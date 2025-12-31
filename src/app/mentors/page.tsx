@@ -3,6 +3,8 @@
 import Link from 'next/link';
 import { useState, useCallback } from 'react';
 
+export const dynamic = 'force-dynamic';
+
 interface Mentor {
   id: number;
   name: string;

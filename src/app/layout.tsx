@@ -2,8 +2,14 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "멘토-멘티 채팅",
-  description: "멘토와 멘티를 위한 채팅 어플리케이션",
+  title: "취준로그 - 대기업 현직자 멘토와 1:1 채팅",
+  description: "삼성, LG, 네이버, 카카오 등 대기업 현직자 멘토님과 실시간으로 취업 상담하세요. 취준생을 위한 멘토링 플랫폼",
+  keywords: ["취준", "멘토링", "대기업 취업", "현직자 상담", "취업 정보", "취준로그"],
+  openGraph: {
+    title: "취준로그",
+    description: "대기업 현직자 멘토와 1:1 실시간 취업 상담",
+    type: "website",
+  },
 };
 
 export default function RootLayout({

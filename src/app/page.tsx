@@ -5,6 +5,9 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import Script from 'next/script';
 
+// 빌드 시 정적 생성 방지
+export const dynamic = 'force-dynamic';
+
 export default function LandingPage() {
   const [mentorModalOpen, setMentorModalOpen] = useState(false);
   const [menteeModalOpen, setMenteeModalOpen] = useState(false);

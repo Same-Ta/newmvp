@@ -5,6 +5,8 @@ import Image from 'next/image';
 import { useEffect, useState } from 'react';
 import Script from 'next/script';
 
+export const dynamic = 'force-dynamic';
+
 export default function LandingPage() {
   const [mentorModalOpen, setMentorModalOpen] = useState(false);
   const [menteeModalOpen, setMenteeModalOpen] = useState(false);

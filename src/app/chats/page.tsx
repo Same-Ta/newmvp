@@ -62,7 +62,7 @@ export default function ChatsPage() {
         
         // 모든 채팅방 ID 확인
         for (const id of Object.keys(chatInfo)) {
-          const messagesRef = collection(db, 'chats', id, 'messages');
+          const messagesRef = collection(db!, 'chats', id, 'messages');
           const q = query(messagesRef);
           const snapshot = await getDocs(q);
           

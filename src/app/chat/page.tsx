@@ -3,6 +3,9 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 
+// 빌드 시 정적 생성 방지
+export const dynamic = 'force-dynamic';
+
 // 멘토 정보 가져오기 (chat/[id]/page.tsx에서 동일한 데이터 사용)
 const chatInfo: { [key: string]: { name: string; status: string; avatar: string; field: string; company: string; experience: string; description: string } } = {
   '1': { name: '이원준', status: '온라인', avatar: '👨‍🍳', field: '마케팅/식품 기획', company: 'CJ제일제당', experience: '입사 2년차', description: '트렌드를 읽고 실행하는 식품 마케터입니다. "스펙보다 회사가 왜 나를 뽑아야 하는지" 설명할 수 있었던 게 합격의 킥이었습니다. 취준생 여러분의 솔직한 고민, 함께 나눠요!' },
