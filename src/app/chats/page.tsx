@@ -5,6 +5,9 @@ import { useState, useMemo, useEffect } from 'react';
 import { db } from '@/lib/firebase';
 import { collection, query, getDocs } from 'firebase/firestore';
 
+// 빌드 시 정적 생성 방지
+export const dynamic = 'force-dynamic';
+
 interface Chat {
   id: string;
   name: string;
@@ -48,6 +51,13 @@ export default function ChatsPage() {
   useEffect(() => {
     const fetchChats = async () => {
       try {
+        // Firebase가 설정되지 않은 경우 빈 배열 반환
+        if (!db) {
+          setChats([]);
+          setIsLoading(false);
+          return;
+        }
+
         const chatIds: string[] = [];
         
         // 모든 채팅방 ID 확인

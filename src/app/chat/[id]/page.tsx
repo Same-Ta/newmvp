@@ -6,6 +6,9 @@ import { useParams } from 'next/navigation';
 import { db } from '@/lib/firebase';
 import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, getDocs, deleteDoc } from 'firebase/firestore';
 
+// 빌드 시 정적 생성 방지
+export const dynamic = 'force-dynamic';
+
 interface Message {
   id: string;
   text?: string;
@@ -100,7 +103,7 @@ export default function ChatPage() {
   }, [chatId]);
 
   const handleShowQuestions = useCallback(async () => {
-    if (!chatId) return;
+    if (!chatId || !db) return;
     const questions = recommendedQuestions[chatId] || [];
     if (questions.length === 0) return;
 
@@ -121,7 +124,7 @@ export default function ChatPage() {
 
   // Firebase에서 실시간 메시지 불러오기 및 초기 메시지 설정
   useEffect(() => {
-    if (!chatId) return;
+    if (!chatId || !db) return;
 
     const messagesRef = collection(db, 'chats', chatId, 'messages');
     const q = query(messagesRef, orderBy('timestamp', 'asc'));
@@ -164,7 +167,7 @@ export default function ChatPage() {
   }, [messages, scrollToBottom]);
 
   const handleSend = useCallback(async () => {
-    if (inputText.trim() === '' || !chatId) return;
+    if (inputText.trim() === '' || !chatId || !db) return;
 
     try {
       const messagesRef = collection(db, 'chats', chatId, 'messages');
