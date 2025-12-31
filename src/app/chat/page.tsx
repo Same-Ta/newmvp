@@ -86,7 +86,9 @@ export default function ChatWelcomePage() {
         <div className="max-w-md w-full">
           {/* 환영 메시지 */}
           <div className="text-center mb-8">
-            <div className="text-6xl mb-4 animate-bounce">👋</div>
+            <div className="w-20 h-20 mx-auto mb-4 bg-green-100 rounded-full flex items-center justify-center">
+              <div className="w-12 h-12 bg-green-500 rounded-full"></div>
+            </div>
             <h2 className="text-3xl font-bold text-gray-900 mb-3">
               취준로그에 오신 것을<br/>환영합니다!
             </h2>
@@ -99,8 +101,8 @@ export default function ChatWelcomePage() {
           {/* 주요 기능 소개 */}
           <div className="bg-white rounded-2xl shadow-lg p-6 mb-6 space-y-4">
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0 text-2xl">
-                🎯
+              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <div className="w-6 h-6 bg-green-500 rounded-full"></div>
               </div>
               <div>
                 <h3 className="font-bold text-gray-900 mb-1">직무별 전문가</h3>
@@ -109,8 +111,8 @@ export default function ChatWelcomePage() {
             </div>
 
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-blue-100 rounded-xl flex items-center justify-center flex-shrink-0 text-2xl">
-                💼
+              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <div className="w-6 h-6 bg-green-500 rounded-full"></div>
               </div>
               <div>
                 <h3 className="font-bold text-gray-900 mb-1">대기업 현직자</h3>
@@ -119,8 +121,8 @@ export default function ChatWelcomePage() {
             </div>
 
             <div className="flex items-start gap-4">
-              <div className="w-12 h-12 bg-purple-100 rounded-xl flex items-center justify-center flex-shrink-0 text-2xl">
-                💬
+              <div className="w-12 h-12 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+                <div className="w-6 h-6 bg-green-500 rounded-full"></div>
               </div>
               <div>
                 <h3 className="font-bold text-gray-900 mb-1">1:1 실시간 채팅</h3>
@@ -132,7 +134,7 @@ export default function ChatWelcomePage() {
           {/* CTA 버튼 */}
           <button
             onClick={() => setShowMentorSelector(true)}
-            className="w-full bg-gradient-to-r from-orange-500 to-orange-600 text-white text-lg font-bold py-4 px-6 rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
+            className="w-full bg-gradient-to-r from-green-500 to-green-600 text-white text-lg font-bold py-4 px-6 rounded-xl hover:from-green-600 hover:to-green-700 transition-all shadow-lg hover:shadow-xl transform hover:scale-105"
           >
             멘토 프로필 리스트 보기
           </button>
