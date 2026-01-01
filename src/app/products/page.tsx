@@ -2,6 +2,8 @@
 
 import Link from 'next/link';
 import { useState } from 'react';
+import { db } from '@/lib/firebase';
+import { collection, addDoc, serverTimestamp } from 'firebase/firestore';
 
 // 빌드 시 정적 생성 방지
 export const dynamic = 'force-dynamic';
@@ -350,10 +352,50 @@ const categories = ['전체', '취업', '개발', '디자인', '데이터', '마
 
 export default function ProductsPage() {
   const [selectedCategory, setSelectedCategory] = useState('전체');
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
+  const [selectedProduct, setSelectedProduct] = useState<Product | null>(null);
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false);
 
   const filteredProducts = selectedCategory === '전체'
     ? products
     : products.filter((p) => p.category === selectedCategory);
+
+  const handlePurchaseClick = (product: Product) => {
+    setSelectedProduct(product);
+    setShowPaymentModal(true);
+  };
+
+  const handlePayment = async () => {
+    if (!selectedProduct || !db) return;
+    
+    setIsProcessingPayment(true);
+    
+    try {
+      // Firebase에 결제 정보 저장
+      const purchasesRef = collection(db, 'purchases');
+      await addDoc(purchasesRef, {
+        productId: selectedProduct.id,
+        productTitle: selectedProduct.title,
+        mentorName: selectedProduct.mentorName,
+        price: selectedProduct.price,
+        company: selectedProduct.company,
+        field: selectedProduct.field,
+        category: selectedProduct.category,
+        timestamp: serverTimestamp(),
+        status: 'completed'
+      });
+      
+      // 성공 메시지
+      alert('결제가 완료되었습니다! 🎉');
+      setShowPaymentModal(false);
+      setSelectedProduct(null);
+    } catch (error) {
+      console.error('결제 처리 실패:', error);
+      alert('결제 처리 중 오류가 발생했습니다. 다시 시도해주세요.');
+    } finally {
+      setIsProcessingPayment(false);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-green-50">
@@ -448,7 +490,9 @@ export default function ProductsPage() {
                   </span>
                 </div>
 
-                <button className="w-full py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-semibold hover:from-green-600 hover:to-green-700 transition-all">
+                <button className="w-full py-3 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-semibold hover:from-green-600 hover:to-green-700 transition-all"
+                  onClick={() => handlePurchaseClick(product)}
+                >
                   구매하기
                 </button>
               </div>
@@ -489,6 +533,110 @@ export default function ProductsPage() {
           </Link>
         </div>
       </nav>
+
+      {/* 결제 모달 */}
+      {showPaymentModal && selectedProduct && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
+            {/* 모달 헤더 */}
+            <div className="bg-gradient-to-r from-green-500 to-green-600 p-6 text-white">
+              <div className="flex items-center justify-between mb-3">
+                <h2 className="text-2xl font-bold">결제하기</h2>
+                <button
+                  onClick={() => {
+                    setShowPaymentModal(false);
+                    setSelectedProduct(null);
+                  }}
+                  className="p-2 hover:bg-white/20 rounded-full transition-colors"
+                  aria-label="닫기"
+                >
+                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                  </svg>
+                </button>
+              </div>
+              <p className="text-green-100 text-sm">안전한 결제를 진행합니다</p>
+            </div>
+
+            {/* 상품 정보 */}
+            <div className="p-6 border-b">
+              <div className="flex gap-4">
+                <div className="w-20 h-20 bg-gradient-to-br from-green-100 to-green-200 rounded-xl flex items-center justify-center text-3xl">
+                  {selectedProduct.thumbnail}
+                </div>
+                <div className="flex-1">
+                  <h3 className="font-bold text-lg text-gray-900 mb-1 line-clamp-2">
+                    {selectedProduct.title}
+                  </h3>
+                  <p className="text-sm text-gray-600">{selectedProduct.mentorName} 멘토</p>
+                  <div className="flex gap-2 mt-2">
+                    <span className="px-2 py-1 bg-gray-100 rounded text-xs text-gray-600">
+                      {selectedProduct.company}
+                    </span>
+                    <span className="px-2 py-1 bg-blue-100 rounded text-xs text-blue-600">
+                      {selectedProduct.field}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+
+            {/* 결제 정보 */}
+            <div className="p-6 space-y-4">
+              <div className="space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">상품 금액</span>
+                  <span className="font-semibold text-gray-900">{selectedProduct.price.toLocaleString()}원</span>
+                </div>
+                <div className="flex items-center justify-between text-sm">
+                  <span className="text-gray-600">할인</span>
+                  <span className="font-semibold text-green-600">-0원</span>
+                </div>
+                <div className="border-t pt-3 flex items-center justify-between">
+                  <span className="font-bold text-lg text-gray-900">최종 결제 금액</span>
+                  <span className="font-bold text-2xl text-green-600">{selectedProduct.price.toLocaleString()}원</span>
+                </div>
+              </div>
+
+              {/* 결제 수단 */}
+              <div className="bg-gray-50 rounded-xl p-4">
+                <p className="text-sm font-semibold text-gray-700 mb-3">결제 수단</p>
+                <div className="space-y-2">
+                  <label className="flex items-center gap-3 p-3 bg-white rounded-lg border-2 border-green-500 cursor-pointer">
+                    <input type="radio" name="payment" defaultChecked className="w-4 h-4 text-green-600" />
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900">신용카드</p>
+                      <p className="text-xs text-gray-500">간편 결제</p>
+                    </div>
+                    <div className="text-2xl">💳</div>
+                  </label>
+                  <label className="flex items-center gap-3 p-3 bg-white rounded-lg border cursor-pointer">
+                    <input type="radio" name="payment" className="w-4 h-4 text-green-600" />
+                    <div className="flex-1">
+                      <p className="font-medium text-gray-900">카카오페이</p>
+                      <p className="text-xs text-gray-500">간편 결제</p>
+                    </div>
+                    <div className="text-2xl">💛</div>
+                  </label>
+                </div>
+              </div>
+
+              {/* 결제 버튼 */}
+              <button
+                onClick={handlePayment}
+                disabled={isProcessingPayment}
+                className="w-full py-4 bg-gradient-to-r from-green-500 to-green-600 text-white rounded-xl font-bold text-lg hover:from-green-600 hover:to-green-700 transition-all shadow-lg disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                {isProcessingPayment ? '처리 중...' : `${selectedProduct.price.toLocaleString()}원 결제하기`}
+              </button>
+
+              <p className="text-xs text-gray-500 text-center">
+                결제 진행 시 <span className="text-green-600 font-semibold">이용약관</span> 및 <span className="text-green-600 font-semibold">환불정책</span>에 동의한 것으로 간주됩니다.
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

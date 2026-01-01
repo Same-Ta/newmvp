@@ -405,10 +405,10 @@ export default function ChatPage() {
       </div>
       {/* 멘토 선택 모달 */}
       {showMentorSelector && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
-          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-hidden">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 select-none">
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-visible relative select-none">
             {/* 모달 헤더 */}
-            <div className="p-6 border-b border-gray-100">
+            <div className="p-6 border-b border-gray-100 select-none">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold text-gray-900">멘토 선택</h2>
                 <button
@@ -425,7 +425,43 @@ export default function ChatPage() {
             </div>
 
             {/* 카드 영역 */}
-            <div className="relative h-[500px] overflow-hidden bg-gradient-to-br from-gray-50 to-gray-100">
+            <div className="relative h-[550px] bg-gradient-to-br from-gray-50 to-gray-100 overflow-hidden">
+              {/* 왼쪽 화살표 버튼 */}
+              <button
+                onClick={() => {
+                  if (currentCardIndex > 0) {
+                    setCurrentCardIndex(currentCardIndex - 1);
+                  } else {
+                    setCurrentCardIndex(mentorList.length - 1);
+                  }
+                }}
+                className="absolute left-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
+                aria-label="이전 멘토"
+              >
+                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+                </svg>
+              </button>
+
+              {/* 오른쪽 화살표 버튼 */}
+              <button
+                onClick={() => {
+                  if (currentCardIndex < mentorList.length - 1) {
+                    setCurrentCardIndex(currentCardIndex + 1);
+                  } else {
+                    setCurrentCardIndex(0);
+                  }
+                }}
+                className="absolute right-4 top-1/2 -translate-y-1/2 z-30 w-10 h-10 bg-white rounded-full shadow-lg flex items-center justify-center hover:bg-gray-50 transition-colors"
+                aria-label="다음 멘토"
+              >
+                <svg className="w-5 h-5 text-gray-700" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
+              
+              <div className="h-full px-16 overflow-hidden">
+
               {mentorList.map((mentor, index) => {
                 const offset = index - currentCardIndex;
                 const isVisible = Math.abs(offset) <= 2;
@@ -443,16 +479,16 @@ export default function ChatPage() {
                       pointerEvents: offset === 0 ? 'auto' : 'none',
                     }}
                   >
-                    <div className="w-[90%] max-w-sm bg-white rounded-2xl shadow-xl overflow-hidden">
+                    <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl overflow-hidden select-none">
                       {/* 카드 상단 - 회사/직무 */}
-                      <div className="bg-gradient-to-br from-orange-500 to-orange-600 p-6 text-white">
+                      <div className="bg-gradient-to-br from-green-500 to-green-600 p-6 text-white">
                         <div className="flex items-center gap-3 mb-3">
                           <div className="w-16 h-16 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-3xl">
                             {mentor.avatar}
                           </div>
                           <div className="flex-1">
                             <h3 className="text-2xl font-bold">{mentor.name}</h3>
-                            <p className="text-orange-100 text-sm">{mentor.experience}</p>
+                            <p className="text-green-100 text-sm">{mentor.experience}</p>
                           </div>
                           {mentor.status === '온라인' && (
                             <div className="w-3 h-3 bg-green-400 rounded-full animate-pulse"></div>
@@ -465,15 +501,15 @@ export default function ChatPage() {
                       </div>
 
                       {/* 카드 본문 - 자기소개 */}
-                      <div className="p-6">
-                        <p className="text-gray-700 leading-relaxed mb-4">{mentor.description}</p>
+                      <div className="p-6 select-none" style={{ userSelect: 'none', WebkitUserSelect: 'none', msUserSelect: 'none' }}>
+                        <p className="text-gray-700 leading-relaxed mb-4" style={{ userSelect: 'none' }}>{mentor.description}</p>
                         
                         {/* 추천 질문 미리보기 */}
-                        <div className="bg-gray-50 rounded-xl p-4">
-                          <p className="text-xs font-semibold text-gray-500 mb-2">💡 추천 질문</p>
-                          <div className="space-y-2">
+                        <div className="bg-gray-50 rounded-xl p-4" style={{ userSelect: 'none' }}>
+                          <p className="text-xs font-semibold text-gray-500 mb-2" style={{ userSelect: 'none' }}>💡 추천 질문</p>
+                          <div className="space-y-2" style={{ userSelect: 'none' }}>
                             {recommendedQuestions[mentor.id]?.slice(0, 2).map((q, i) => (
-                              <p key={i} className="text-xs text-gray-600 line-clamp-1">• {q}</p>
+                              <p key={i} className="text-xs text-gray-600 line-clamp-1" style={{ userSelect: 'none' }}>• {q}</p>
                             ))}
                           </div>
                         </div>
@@ -483,29 +519,26 @@ export default function ChatPage() {
                       <div className="p-6 pt-0 flex gap-3">
                         <button
                           onClick={() => {
-                            if (currentCardIndex < mentorList.length - 1) {
-                              setCurrentCardIndex(currentCardIndex + 1);
-                            } else {
-                              setCurrentCardIndex(0);
-                            }
+                            window.location.href = `/mentor/${mentor.id}`;
                           }}
-                          className="flex-1 py-3 border-2 border-gray-200 text-gray-600 font-medium rounded-xl hover:bg-gray-50 transition-colors"
+                          className="flex-1 py-3 border-2 border-green-500 text-green-600 font-bold rounded-xl hover:bg-green-50 transition-colors"
                         >
-                          다음
+                          프로필 자세히 보기
                         </button>
                         <button
                           onClick={() => {
                             window.location.href = `/chat/${mentor.id}`;
                           }}
-                          className="flex-1 py-3 bg-gradient-to-r from-orange-500 to-orange-600 text-white font-bold rounded-xl hover:from-orange-600 hover:to-orange-700 transition-all shadow-lg"
+                          className="flex-1 py-3 bg-gradient-to-r from-green-500 to-green-600 text-white font-bold rounded-xl hover:from-green-600 hover:to-green-700 transition-all shadow-lg"
                         >
-                          채팅 시작
+                          채팅하기
                         </button>
                       </div>
                     </div>
                   </div>
                 );
               })}
+              </div>
             </div>
 
             {/* 카드 인디케이터 */}
