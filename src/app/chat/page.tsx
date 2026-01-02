@@ -221,7 +221,7 @@ export default function ChatWelcomePage() {
                     }}
                   >
                     <div className="w-full max-w-md bg-white rounded-3xl shadow-xl overflow-hidden h-[680px] mx-auto flex flex-col">
-                      {/* 프로필 상단 */}
+                      {/* 프로필 상단 - 고정 */}
                       <div className="p-8 flex flex-col items-center border-b border-gray-100 flex-shrink-0">
                         <div className="w-24 h-24 bg-gray-200 rounded-full flex items-center justify-center mb-4 shadow-lg">
                           <svg className="w-12 h-12 text-gray-400" fill="currentColor" viewBox="0 0 24 24">
@@ -232,49 +232,52 @@ export default function ChatWelcomePage() {
                         <p className="text-gray-500 text-sm mt-1">{mentor.field}</p>
                       </div>
 
-                      {/* 회사 및 경력 */}
-                      <div className="px-8 py-4 border-b border-gray-100 flex-shrink-0">
-                        <div className="flex items-center justify-between mb-1">
-                          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Company</h3>
-                          {mentor.status === '온라인' && (
-                            <span className="flex items-center gap-1.5 text-xs text-green-600 font-medium">
-                              <span className="w-2 h-2 bg-green-500 rounded-full"></span>
-                              온라인
-                            </span>
-                          )}
+                      {/* 스크롤 가능한 콘텐츠 영역 */}
+                      <div className="flex-1 overflow-y-auto">
+                        {/* 회사 및 경력 */}
+                        <div className="px-8 py-4 border-b border-gray-100">
+                          <div className="flex items-center justify-between mb-1">
+                            <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide">Company</h3>
+                            {mentor.status === '온라인' && (
+                              <span className="flex items-center gap-1.5 text-xs text-green-600 font-medium">
+                                <span className="w-2 h-2 bg-green-500 rounded-full"></span>
+                                온라인
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-gray-900 font-semibold text-lg">{mentor.company}</p>
                         </div>
-                        <p className="text-gray-900 font-semibold text-lg">{mentor.company}</p>
-                      </div>
 
-                      {/* 경력 */}
-                      <div className="px-8 py-4 border-b border-gray-100 flex-shrink-0">
-                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Experience</h3>
-                        <div className="bg-green-50 rounded-xl p-3">
-                          <p className="text-sm text-gray-700 font-medium">{mentor.field}</p>
-                          <p className="text-xs text-gray-500 mt-1">경력 {mentor.experience}</p>
+                        {/* 경력 */}
+                        <div className="px-8 py-4 border-b border-gray-100">
+                          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Experience</h3>
+                          <div className="bg-green-50 rounded-xl p-3">
+                            <p className="text-sm text-gray-700 font-medium">{mentor.field}</p>
+                            <p className="text-xs text-gray-500 mt-1">경력 {mentor.experience}</p>
+                          </div>
+                        </div>
+
+                        {/* 자기소개 */}
+                        <div className="px-8 py-4 border-b border-gray-100">
+                          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">About</h3>
+                          <p className="text-sm text-gray-700 leading-relaxed">{mentor.description}</p>
+                        </div>
+
+                        {/* 추천 질문 */}
+                        <div className="px-8 py-4 bg-green-50">
+                          <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">추천 질문</h3>
+                          <div className="space-y-1.5">
+                            {recommendedQuestions[mentor.id]?.slice(0, 2).map((q, i) => (
+                              <p key={i} className="text-xs text-gray-600 line-clamp-1 pl-3 relative before:content-['•'] before:absolute before:left-0">
+                                {q}
+                              </p>
+                            ))}
+                          </div>
                         </div>
                       </div>
 
-                      {/* 자기소개 */}
-                      <div className="px-8 py-4 border-b border-gray-100 flex-shrink-0">
-                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">About</h3>
-                        <p className="text-sm text-gray-700 leading-relaxed line-clamp-3">{mentor.description}</p>
-                      </div>
-
-                      {/* 추천 질문 */}
-                      <div className="px-8 py-4 bg-green-50 border-t border-gray-100 flex-shrink-0">
-                        <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">추천 질문</h3>
-                        <div className="space-y-1.5">
-                          {recommendedQuestions[mentor.id]?.slice(0, 2).map((q, i) => (
-                            <p key={i} className="text-xs text-gray-600 line-clamp-1 pl-3 relative before:content-['•'] before:absolute before:left-0">
-                              {q}
-                            </p>
-                          ))}
-                        </div>
-                      </div>
-
-                      {/* 하단 버튼 영역 */}
-                      <div className="p-8 border-t border-gray-100 flex-shrink-0 mt-auto">
+                      {/* 하단 버튼 영역 - 고정 */}
+                      <div className="p-8 border-t border-gray-100 flex-shrink-0">
                         <div className="flex gap-3">
                           <button
                             onClick={() => {
