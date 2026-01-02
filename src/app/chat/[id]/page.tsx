@@ -405,10 +405,10 @@ export default function ChatPage() {
       </div>
       {/* 멘토 선택 모달 */}
       {showMentorSelector && (
-        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4 select-none">
-          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-visible relative select-none">
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+          <div className="bg-white rounded-3xl w-full max-w-md shadow-2xl overflow-visible relative">
             {/* 모달 헤더 */}
-            <div className="p-6 border-b border-gray-100 select-none">
+            <div className="p-6 border-b border-gray-100">
               <div className="flex items-center justify-between">
                 <h2 className="text-xl font-bold text-gray-900">멘토 선택</h2>
                 <button
@@ -471,7 +471,7 @@ export default function ChatPage() {
                 return (
                   <div
                     key={mentor.id}
-                    className="absolute inset-0 flex items-center justify-center transition-all duration-300 ease-out"
+                    className="absolute inset-0 flex items-center justify-center transition-all duration-300 ease-out px-4"
                     style={{
                       transform: `translateX(${offset * 100}%) scale(${1 - Math.abs(offset) * 0.05})`,
                       opacity: offset === 0 ? 1 : 0.3,
@@ -479,7 +479,7 @@ export default function ChatPage() {
                       pointerEvents: offset === 0 ? 'auto' : 'none',
                     }}
                   >
-                    <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl overflow-hidden select-none">
+                    <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl" style={{ overflow: 'hidden' }}>
                       {/* 카드 상단 - 회사/직무 */}
                       <div className="bg-gradient-to-br from-green-500 to-green-600 p-6 text-white">
                         <div className="flex items-center gap-3 mb-3">
@@ -501,15 +501,15 @@ export default function ChatPage() {
                       </div>
 
                       {/* 카드 본문 - 자기소개 */}
-                      <div className="p-6 select-none" style={{ userSelect: 'none', WebkitUserSelect: 'none', msUserSelect: 'none' }}>
-                        <p className="text-gray-700 leading-relaxed mb-4" style={{ userSelect: 'none' }}>{mentor.description}</p>
+                      <div className="p-6" style={{ overflow: 'hidden' }}>
+                        <p className="text-gray-700 leading-relaxed mb-4 line-clamp-3">{mentor.description}</p>
                         
                         {/* 추천 질문 미리보기 */}
-                        <div className="bg-gray-50 rounded-xl p-4" style={{ userSelect: 'none' }}>
-                          <p className="text-xs font-semibold text-gray-500 mb-2" style={{ userSelect: 'none' }}>💡 추천 질문</p>
-                          <div className="space-y-2" style={{ userSelect: 'none' }}>
+                        <div className="bg-gray-50 rounded-xl p-4">
+                          <p className="text-xs font-semibold text-gray-500 mb-2">💡 추천 질문</p>
+                          <div className="space-y-2">
                             {recommendedQuestions[mentor.id]?.slice(0, 2).map((q, i) => (
-                              <p key={i} className="text-xs text-gray-600 line-clamp-1" style={{ userSelect: 'none' }}>• {q}</p>
+                              <p key={i} className="text-xs text-gray-600 line-clamp-1">• {q}</p>
                             ))}
                           </div>
                         </div>

@@ -256,9 +256,9 @@ export default function ChatWelcomePage() {
                       </div>
 
                       {/* 자기소개 */}
-                      <div className="px-8 py-4 border-b border-gray-100 flex-1 overflow-y-auto">
+                      <div className="px-8 py-4 border-b border-gray-100 flex-shrink-0">
                         <h3 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-3">About</h3>
-                        <p className="text-sm text-gray-700 leading-relaxed">{mentor.description}</p>
+                        <p className="text-sm text-gray-700 leading-relaxed line-clamp-3">{mentor.description}</p>
                       </div>
 
                       {/* 추천 질문 */}
