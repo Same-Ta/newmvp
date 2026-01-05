@@ -2,9 +2,10 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import Link from 'next/link';
-import { useParams } from 'next/navigation';
-import { db } from '@/lib/firebase';
-import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, getDocs, deleteDoc } from 'firebase/firestore';
+import { useParams, useRouter } from 'next/navigation';
+import { db, auth } from '@/lib/firebase';
+import { collection, addDoc, query, orderBy, onSnapshot, serverTimestamp, getDocs, deleteDoc, doc, setDoc } from 'firebase/firestore';
+import { onAuthStateChanged } from 'firebase/auth';
 
 // 빌드 시 정적 생성 방지
 export const dynamic = 'force-dynamic';
@@ -12,7 +13,7 @@ export const dynamic = 'force-dynamic';
 interface Message {
   id: string;
   text?: string;
-  sender: 'me' | 'other';
+  sender: 'me' | 'other' | 'admin';
   timestamp: any;
   type: 'text' | 'audio' | 'date';
   duration?: number;
@@ -66,9 +67,11 @@ const recommendedQuestions: { [key: string]: string[] } = {
 
 export default function ChatPage() {
   const params = useParams();
-  const chatId = params?.id as string;
-  const chat = chatInfo[chatId] || { name: '사용자', status: '온라인', avatar: '👤' };
+  const router = useRouter();
+  const mentorId = params?.id as string; // 멘토 ID
+  const chat = chatInfo[mentorId] || { name: '사용자', status: '온라인', avatar: '👤' };
 
+  const [userId, setUserId] = useState<string | null>(null);
   const [messages, setMessages] = useState<Message[]>([]);
   const [inputText, setInputText] = useState('');
   const [isLoading, setIsLoading] = useState(true);
@@ -77,6 +80,19 @@ export default function ChatPage() {
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
+  // Firebase Auth 사용자 ID 초기화
+  useEffect(() => {
+    const unsubscribe = onAuthStateChanged(auth, (user) => {
+      if (user) {
+        setUserId(user.uid);
+      } else {
+        // 로그인이 필요한 경우 로그인 모달을 띄우도록 랜딩페이지로 리다이렉트
+        router.push('/?login=required');
+      }
+    });
+    return () => unsubscribe();
+  }, [router]);
+
   // 멘토 목록 생성
   const mentorList = Object.entries(chatInfo).map(([id, info]) => ({
     id,
@@ -84,8 +100,8 @@ export default function ChatPage() {
   }));
 
   const handleShowProfile = useCallback(() => {
-    if (!chatId) return;
-    const mentor = chatInfo[chatId];
+    if (!mentorId) return;
+    const mentor = chatInfo[mentorId];
     if (!mentor) return;
 
     // 로컬 state에만 추가 (데이터베이스에 저장 안 함)
@@ -98,11 +114,11 @@ export default function ChatPage() {
     };
     setMessages(prev => [...prev, profileMessage]);
     setShowQuickActions(false);
-  }, [chatId]);
+  }, [mentorId]);
 
   const handleShowQuestions = useCallback(() => {
-    if (!chatId) return;
-    const questions = recommendedQuestions[chatId] || [];
+    if (!mentorId) return;
+    const questions = recommendedQuestions[mentorId] || [];
     if (questions.length === 0) return;
 
     // 로컬 state에만 추가 (데이터베이스에 저장 안 함)
@@ -115,13 +131,14 @@ export default function ChatPage() {
     };
     setMessages(prev => [...prev, questionMessage]);
     setShowQuickActions(false);
-  }, [chatId]);
+  }, [mentorId]);
 
-  // Firebase에서 실시간 메시지 불러오기
+  // Firebase에서 실시간 메시지 불러오기 (사용자별 채팅방)
   useEffect(() => {
-    if (!chatId || !db) return;
+    if (!mentorId || !db || !userId) return;
 
-    const messagesRef = collection(db, 'chats', chatId, 'messages');
+    // 경로: users/{userId}/chats/{mentorId}/messages
+    const messagesRef = collection(db, 'users', userId, 'chats', mentorId, 'messages');
     const q = query(messagesRef, orderBy('timestamp', 'asc'));
 
     const unsubscribe = onSnapshot(q, (snapshot) => {
@@ -138,7 +155,7 @@ export default function ChatPage() {
     });
 
     return () => unsubscribe();
-  }, [chatId]);
+  }, [mentorId, userId]);
 
   const scrollToBottom = useCallback(() => {
     messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' });
@@ -149,21 +166,32 @@ export default function ChatPage() {
   }, [messages, scrollToBottom]);
 
   const handleSend = useCallback(async () => {
-    if (inputText.trim() === '' || !chatId || !db) return;
+    if (inputText.trim() === '' || !mentorId || !db || !userId) return;
 
     try {
-      const messagesRef = collection(db, 'chats', chatId, 'messages');
+      // 1. 채팅방 document 생성/업데이트 (관리자가 조회할 수 있도록)
+      const chatRef = doc(db, 'users', userId, 'chats', mentorId);
+      await setDoc(chatRef, {
+        mentorId: mentorId,
+        lastMessage: inputText,
+        lastMessageTime: serverTimestamp(),
+        updatedAt: serverTimestamp(),
+      }, { merge: true });
+
+      // 2. 메시지 추가
+      const messagesRef = collection(db, 'users', userId, 'chats', mentorId, 'messages');
       await addDoc(messagesRef, {
         text: inputText,
         sender: 'me',
         timestamp: serverTimestamp(),
         type: 'text',
       });
+      
       setInputText('');
     } catch (error) {
       console.error('메시지 전송 실패:', error);
     }
-  }, [inputText, chatId]);
+  }, [inputText, mentorId, userId]);
 
   const formatTime = useCallback((timestamp: any) => {
     if (!timestamp) return '';
@@ -191,6 +219,16 @@ export default function ChatPage() {
             >
               <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
+              </svg>
+            </Link>
+            
+            <Link 
+              href="/" 
+              className="text-gray-800 hover:bg-gray-100 rounded-lg p-2 transition-colors"
+              aria-label="홈으로"
+            >
+              <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" />
               </svg>
             </Link>
             
@@ -316,9 +354,14 @@ export default function ChatPage() {
                     className={`rounded-2xl px-4 py-2.5 ${
                       message.sender === 'me'
                         ? 'bg-green-600 text-white rounded-br-sm'
-                        : 'bg-white text-gray-900 rounded-bl-sm shadow-sm'
+                        : message.sender === 'admin'
+                        ? 'bg-gradient-to-r from-blue-500 to-blue-600 text-white'
+                        : 'bg-white text-gray-900 shadow-sm'
                     }`}
                   >
+                    {message.sender === 'admin' && (
+                      <div className="text-xs opacity-90 mb-1 font-medium">멘토 답변</div>
+                    )}
                     <p className="text-sm leading-relaxed whitespace-pre-wrap">{message.text}</p>
                   </div>
                   <p className={`text-xs text-gray-400 mt-1 ${message.sender === 'me' ? 'text-right' : 'text-left'}`}>

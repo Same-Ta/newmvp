@@ -1,5 +1,6 @@
 import { initializeApp, getApps, FirebaseApp } from 'firebase/app';
 import { getFirestore, Firestore } from 'firebase/firestore';
+import { getAuth, Auth, GoogleAuthProvider } from 'firebase/auth';
 
 // Firebase 설정을 환경변수에서 가져옵니다
 const firebaseConfig = {
@@ -27,5 +28,7 @@ if (!isConfigured) {
 // Initialize Firebase
 const app: FirebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const db: Firestore = getFirestore(app);
+const auth: Auth = getAuth(app);
+const googleProvider = new GoogleAuthProvider();
 
-export { app, db };
+export { app, db, auth, googleProvider };
