@@ -83,53 +83,48 @@ export default function ChatPage() {
     ...info
   }));
 
-  const handleShowProfile = useCallback(async () => {
-    if (!chatId || !db) return;
+  const handleShowProfile = useCallback(() => {
+    if (!chatId) return;
     const mentor = chatInfo[chatId];
     if (!mentor) return;
 
-    try {
-      const messagesRef = collection(db, 'chats', chatId, 'messages');
-      await addDoc(messagesRef, {
-        text: `📋 ${mentor.name} 멘토님의 프로필\n\n직무: ${mentor.field}\n회사: ${mentor.company}\n경력: ${mentor.experience}\n\n${mentor.description}`,
-        sender: 'other',
-        timestamp: serverTimestamp(),
-        type: 'text',
-      });
-      setShowQuickActions(false);
-    } catch (error) {
-      console.error('프로필 전송 실패:', error);
-    }
+    // 로컬 state에만 추가 (데이터베이스에 저장 안 함)
+    const profileMessage: Message = {
+      id: `local-${Date.now()}`,
+      text: `📋 ${mentor.name} 멘토님의 프로필\n\n직무: ${mentor.field}\n회사: ${mentor.company}\n경력: ${mentor.experience}\n\n${mentor.description}`,
+      sender: 'other',
+      timestamp: new Date(),
+      type: 'text',
+    };
+    setMessages(prev => [...prev, profileMessage]);
+    setShowQuickActions(false);
   }, [chatId]);
 
-  const handleShowQuestions = useCallback(async () => {
-    if (!chatId || !db) return;
+  const handleShowQuestions = useCallback(() => {
+    if (!chatId) return;
     const questions = recommendedQuestions[chatId] || [];
     if (questions.length === 0) return;
 
-    try {
-      const messagesRef = collection(db, 'chats', chatId, 'messages');
-      const questionText = `💡 추천 질문 리스트\n\n${questions.map((q, i) => `${i + 1}. ${q}`).join('\n\n')}`;
-      await addDoc(messagesRef, {
-        text: questionText,
-        sender: 'other',
-        timestamp: serverTimestamp(),
-        type: 'text',
-      });
-      setShowQuickActions(false);
-    } catch (error) {
-      console.error('질문 추천 전송 실패:', error);
-    }
+    // 로컬 state에만 추가 (데이터베이스에 저장 안 함)
+    const questionMessage: Message = {
+      id: `local-${Date.now()}`,
+      text: `💡 추천 질문 리스트\n\n${questions.map((q, i) => `${i + 1}. ${q}`).join('\n\n')}`,
+      sender: 'other',
+      timestamp: new Date(),
+      type: 'text',
+    };
+    setMessages(prev => [...prev, questionMessage]);
+    setShowQuickActions(false);
   }, [chatId]);
 
-  // Firebase에서 실시간 메시지 불러오기 및 초기 메시지 설정
+  // Firebase에서 실시간 메시지 불러오기
   useEffect(() => {
     if (!chatId || !db) return;
 
     const messagesRef = collection(db, 'chats', chatId, 'messages');
     const q = query(messagesRef, orderBy('timestamp', 'asc'));
 
-    const unsubscribe = onSnapshot(q, async (snapshot) => {
+    const unsubscribe = onSnapshot(q, (snapshot) => {
       const loadedMessages: Message[] = [];
       snapshot.forEach((doc) => {
         loadedMessages.push({
@@ -137,19 +132,6 @@ export default function ChatPage() {
           ...doc.data(),
         } as Message);
       });
-      
-      // 메시지가 하나도 없으면 환영 메시지 전송
-      if (loadedMessages.length === 0) {
-        const mentor = chatInfo[chatId];
-        if (mentor) {
-          await addDoc(messagesRef, {
-            text: `안녕하세요! ${mentor.company} ${mentor.field} ${mentor.name}입니다 😊\n\n${mentor.description}\n\n궁금한 점이 있으시면 편하게 물어보세요!`,
-            sender: 'other',
-            timestamp: serverTimestamp(),
-            type: 'text',
-          });
-        }
-      }
       
       setMessages(loadedMessages);
       setIsLoading(false);
