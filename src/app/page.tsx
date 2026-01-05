@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import Image from 'next/image';
-import { useEffect, useState } from 'react';
+import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Script from 'next/script';
 import { auth, googleProvider, db } from '@/lib/firebase';
@@ -12,7 +12,8 @@ import { collection, addDoc, serverTimestamp, doc, setDoc, getDoc } from 'fireba
 // 빌드 시 정적 생성 방지
 export const dynamic = 'force-dynamic';
 
-export default function LandingPage() {
+// useSearchParams를 사용하는 내부 컴포넌트
+function LandingPageContent() {
   const searchParams = useSearchParams();
   const router = useRouter();
   const [mentorModalOpen, setMentorModalOpen] = useState(false);
@@ -1144,5 +1145,14 @@ export default function LandingPage() {
         </div>
       </div>
     </>
+  );
+}
+
+// 메인 컴포넌트 - Suspense로 감싸기
+export default function LandingPage() {
+  return (
+    <Suspense fallback={<div className="min-h-screen bg-gray-50 flex items-center justify-center"><div className="text-gray-600">로딩 중...</div></div>}>
+      <LandingPageContent />
+    </Suspense>
   );
 }
