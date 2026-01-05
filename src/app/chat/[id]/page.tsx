@@ -84,12 +84,16 @@ export default function ChatPage() {
   }));
 
   const handleShowProfile = useCallback(async () => {
-    if (!chatId || !db) return;
+    if (!chatId) return;
+    if (!db) {
+      alert('Firebase 연결에 실패했습니다. 페이지를 새로고침해주세요.');
+      return;
+    }
     const mentor = chatInfo[chatId];
     if (!mentor) return;
 
     try {
-      const messagesRef = collection(db!, 'chats', chatId, 'messages');
+      const messagesRef = collection(db, 'chats', chatId, 'messages');
       await addDoc(messagesRef, {
         text: `📋 ${mentor.name} 멘토님의 프로필\n\n직무: ${mentor.field}\n회사: ${mentor.company}\n경력: ${mentor.experience}\n\n${mentor.description}`,
         sender: 'other',
@@ -99,16 +103,21 @@ export default function ChatPage() {
       setShowQuickActions(false);
     } catch (error) {
       console.error('프로필 전송 실패:', error);
+      alert('프로필 전송에 실패했습니다. 다시 시도해주세요.');
     }
   }, [chatId]);
 
   const handleShowQuestions = useCallback(async () => {
-    if (!chatId || !db) return;
+    if (!chatId) return;
+    if (!db) {
+      alert('Firebase 연결에 실패했습니다. 페이지를 새로고침해주세요.');
+      return;
+    }
     const questions = recommendedQuestions[chatId] || [];
     if (questions.length === 0) return;
 
     try {
-      const messagesRef = collection(db!, 'chats', chatId, 'messages');
+      const messagesRef = collection(db, 'chats', chatId, 'messages');
       const questionText = `💡 추천 질문 리스트\n\n${questions.map((q, i) => `${i + 1}. ${q}`).join('\n\n')}`;
       await addDoc(messagesRef, {
         text: questionText,
@@ -119,14 +128,20 @@ export default function ChatPage() {
       setShowQuickActions(false);
     } catch (error) {
       console.error('질문 추천 전송 실패:', error);
+      alert('질문 추천 전송에 실패했습니다. 다시 시도해주세요.');
     }
   }, [chatId]);
 
   // Firebase에서 실시간 메시지 불러오기 및 초기 메시지 설정
   useEffect(() => {
-    if (!chatId || !db) return;
+    if (!chatId) return;
+    if (!db) {
+      console.error('Firebase가 초기화되지 않았습니다.');
+      setIsLoading(false);
+      return;
+    }
 
-    const messagesRef = collection(db!, 'chats', chatId, 'messages');
+    const messagesRef = collection(db, 'chats', chatId, 'messages');
     const q = query(messagesRef, orderBy('timestamp', 'asc'));
 
     const unsubscribe = onSnapshot(q, async (snapshot) => {
@@ -142,17 +157,25 @@ export default function ChatPage() {
       if (loadedMessages.length === 0) {
         const mentor = chatInfo[chatId];
         if (mentor) {
-          await addDoc(messagesRef, {
-            text: `안녕하세요! ${mentor.company} ${mentor.field} ${mentor.name}입니다 😊\n\n${mentor.description}\n\n궁금한 점이 있으시면 편하게 물어보세요!`,
-            sender: 'other',
-            timestamp: serverTimestamp(),
-            type: 'text',
-          });
+          try {
+            await addDoc(messagesRef, {
+              text: `안녕하세요! ${mentor.company} ${mentor.field} ${mentor.name}입니다 😊\n\n${mentor.description}\n\n궁금한 점이 있으시면 편하게 물어보세요!`,
+              sender: 'other',
+              timestamp: serverTimestamp(),
+              type: 'text',
+            });
+          } catch (error) {
+            console.error('환영 메시지 전송 실패:', error);
+          }
         }
       }
       
       setMessages(loadedMessages);
       setIsLoading(false);
+    }, (error) => {
+      console.error('메시지 로딩 실패:', error);
+      setIsLoading(false);
+      alert('메시지를 불러오는데 실패했습니다. Firebase 설정을 확인해주세요.');
     });
 
     return () => unsubscribe();
@@ -167,10 +190,14 @@ export default function ChatPage() {
   }, [messages, scrollToBottom]);
 
   const handleSend = useCallback(async () => {
-    if (inputText.trim() === '' || !chatId || !db) return;
+    if (inputText.trim() === '' || !chatId) return;
+    if (!db) {
+      alert('Firebase 연결에 실패했습니다. 페이지를 새로고침해주세요.');
+      return;
+    }
 
     try {
-      const messagesRef = collection(db!, 'chats', chatId, 'messages');
+      const messagesRef = collection(db, 'chats', chatId, 'messages');
       await addDoc(messagesRef, {
         text: inputText,
         sender: 'me',
@@ -187,15 +214,20 @@ export default function ChatPage() {
           '좋은 의견이네요. 고려해보겠습니다.',
           '감사합니다. 도움이 되었어요.',
         ];
-        await addDoc(messagesRef, {
-          text: replies[Math.floor(Math.random() * replies.length)],
-          sender: 'other',
-          timestamp: serverTimestamp(),
-          type: 'text',
-        });
+        try {
+          await addDoc(messagesRef, {
+            text: replies[Math.floor(Math.random() * replies.length)],
+            sender: 'other',
+            timestamp: serverTimestamp(),
+            type: 'text',
+          });
+        } catch (error) {
+          console.error('자동 응답 전송 실패:', error);
+        }
       }, 1000);
     } catch (error) {
       console.error('메시지 전송 실패:', error);
+      alert('메시지 전송에 실패했습니다. 다시 시도해주세요.');
     }
   }, [inputText, chatId]);
 

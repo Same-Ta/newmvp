@@ -12,20 +12,20 @@ const firebaseConfig = {
   measurementId: process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID
 };
 
-// 환경변수 검증 - 빌드 시에는 경고만 출력
+// 환경변수 검증
 const isConfigured = firebaseConfig.apiKey && firebaseConfig.projectId;
 
-if (!isConfigured && typeof window !== 'undefined') {
-  console.warn('Firebase 환경변수가 설정되지 않았습니다. .env.local 파일을 확인해주세요.');
+if (!isConfigured) {
+  console.error('Firebase 환경변수가 설정되지 않았습니다.');
+  console.error('필요한 환경변수:', {
+    NEXT_PUBLIC_FIREBASE_API_KEY: firebaseConfig.apiKey ? '설정됨' : '미설정',
+    NEXT_PUBLIC_FIREBASE_PROJECT_ID: firebaseConfig.projectId ? '설정됨' : '미설정',
+  });
+  throw new Error('Firebase 환경변수가 올바르게 설정되지 않았습니다. Vercel 대시보드에서 환경변수를 확인해주세요.');
 }
 
 // Initialize Firebase
-let app: FirebaseApp | null = null;
-let db: Firestore | null = null;
-
-if (isConfigured) {
-  app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
-  db = getFirestore(app);
-}
+const app: FirebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
+const db: Firestore = getFirestore(app);
 
 export { app, db };
