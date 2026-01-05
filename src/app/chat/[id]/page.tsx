@@ -178,22 +178,6 @@ export default function ChatPage() {
         type: 'text',
       });
       setInputText('');
-
-      // 상대방의 자동 응답 시뮬레이션
-      setTimeout(async () => {
-        const replies = [
-          '알겠습니다! 잘 확인했어요.',
-          '네, 이해했습니다. 곧 답변드릴게요.',
-          '좋은 의견이네요. 고려해보겠습니다.',
-          '감사합니다. 도움이 되었어요.',
-        ];
-        await addDoc(messagesRef, {
-          text: replies[Math.floor(Math.random() * replies.length)],
-          sender: 'other',
-          timestamp: serverTimestamp(),
-          type: 'text',
-        });
-      }, 1000);
     } catch (error) {
       console.error('메시지 전송 실패:', error);
     }
