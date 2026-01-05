@@ -86,7 +86,7 @@ export default function LandingPage() {
               <div className="w-8 h-8 bg-gradient-to-tr from-green-400 to-blue-500 rounded-lg flex items-center justify-center">
                 <i data-lucide="play" className="w-4 h-4 text-white fill-white ml-0.5"></i>
               </div>
-              취준로그
+              취준로드
             </div>
             <div className="hidden md:flex items-center gap-8 font-medium text-gray-600 text-sm">
               <a href="#features" className="hover:text-green-600 transition-colors">기능 소개</a>
@@ -138,7 +138,7 @@ export default function LandingPage() {
                 <div className="relative w-full h-full bg-gray-900 flex flex-col">
                   {/* Header */}
                   <div className="absolute top-0 w-full p-6 flex justify-between text-white z-20">
-                    <span className="font-bold drop-shadow-md">취준로그</span>
+                    <span className="font-bold drop-shadow-md">취준로드</span>
                     <i data-lucide="menu" className="w-6 h-6 drop-shadow-md"></i>
                   </div>
 
@@ -222,7 +222,7 @@ export default function LandingPage() {
                         {/* Reel 1 - Marketing */}
                         <div className="reel-item">
                           <div className="absolute top-0 w-full p-4 flex justify-between text-white z-20">
-                            <span className="font-bold">취준로그</span>
+                            <span className="font-bold">취준로드</span>
                             <i data-lucide="menu" className="w-5 h-5"></i>
                           </div>
                           
@@ -265,7 +265,7 @@ export default function LandingPage() {
                         {/* Reel 2 - Developer */}
                         <div className="reel-item">
                           <div className="absolute top-0 w-full p-4 flex justify-between text-white z-20">
-                            <span className="font-bold">취준로그</span>
+                            <span className="font-bold">취준로드</span>
                             <i data-lucide="menu" className="w-5 h-5"></i>
                           </div>
                           
@@ -308,7 +308,7 @@ export default function LandingPage() {
                         {/* Reel 3 - Designer */}
                         <div className="reel-item">
                           <div className="absolute top-0 w-full p-4 flex justify-between text-white z-20">
-                            <span className="font-bold">취준로그</span>
+                            <span className="font-bold">취준로드</span>
                             <i data-lucide="menu" className="w-5 h-5"></i>
                           </div>
                           
@@ -562,7 +562,7 @@ export default function LandingPage() {
             {/* Section Header */}
             <div className="text-center mb-16">
               <p className="text-green-600 text-sm font-semibold mb-3 tracking-wider">Vision & Mission</p>
-              <h2 className="text-3xl md:text-5xl font-extrabold text-green-600 mb-4 leading-tight">취준로그가<br/>그리는 미래</h2>
+              <h2 className="text-3xl md:text-5xl font-extrabold text-green-600 mb-4 leading-tight">취준로드가<br/>그리는 미래</h2>
               <p className="text-gray-700 text-lg">청년이 사회로 나아가는 첫 관문</p>
             </div>
 
@@ -619,7 +619,7 @@ export default function LandingPage() {
                     <div className="w-20 h-20 bg-green-100 rounded-full mb-6 overflow-hidden border-4 border-green-200">
                       <span className="text-4xl">👤</span>
                     </div>
-                    <p className="text-2xl font-serif italic mb-4 text-gray-800">&quot;취준로그 덕분에<br/>영상을 보고 생긴 궁금증을 바로 해결 할 수 있었어요!&quot;</p>
+                    <p className="text-2xl font-serif italic mb-4 text-gray-800">&quot;취준로드 덕분에<br/>영상을 보고 생긴 궁금증을 바로 해결 할 수 있었어요!&quot;</p>
                     <p className="text-sm text-gray-600">- 취업준비생 이동형님 -</p>
                   </div>
                 </div>
@@ -727,7 +727,7 @@ export default function LandingPage() {
               <p className="text-gray-700 text-lg mb-10 relative z-10">1분이면 새로운 세상이 열립니다</p>
               
               <Link href="/mentors" className="relative z-10 inline-block px-10 py-5 bg-green-600 text-white rounded-full font-bold text-xl hover:bg-green-700 hover:scale-105 transition-all shadow-[0_0_40px_rgba(34,197,94,0.3)]">
-                취준로그 시작하기
+                취준로드 시작하기
               </Link>
             </div>
           </div>
@@ -741,7 +741,7 @@ export default function LandingPage() {
                 <div className="w-6 h-6 bg-green-600 rounded flex items-center justify-center">
                   <i data-lucide="play" className="w-3 h-3 text-white fill-white ml-0.5"></i>
                 </div>
-                취준로그
+                취준로드
               </div>
               <div className="flex gap-8 text-sm text-gray-600">
                 <a href="#" className="hover:text-green-600">이용약관</a>
@@ -749,7 +749,7 @@ export default function LandingPage() {
                 <a href="#" className="hover:text-green-600">문의하기</a>
               </div>
               <div className="text-gray-500 text-sm">
-                © 2025 취준로그 Inc. All rights reserved.
+                © 2025 취준로드 Inc. All rights reserved.
               </div>
             </div>
           </div>

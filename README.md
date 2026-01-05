@@ -1,18 +1,18 @@
-# 취준로그 - 대기업 현직자 멘토링 플랫폼
+# 취�?로그 - ?�기업 ?�직??멘토�??�랫??
 
-Next.js, TypeScript, Tailwind CSS, Firebase로 구축된 반응형 멘토-멘티 매칭 및 실시간 채팅 플랫폼입니다.
+Next.js, TypeScript, Tailwind CSS, Firebase�?구축??반응??멘토-멘티 매칭 �??�시�?채팅 ?�랫?�입?�다.
 
-## 🎯 주요 기능
+## ?�� 주요 기능
 
-- 🎯 **멘토 발견**: 카드 스와이프 방식으로 20명의 대기업 현직자 멘토 탐색
-- 💬 **실시간 채팅**: Firebase Firestore 기반 1:1 실시간 채팅
-- 🏢 **대기업 멘토**: 삼성, LG, 네이버, 카카오 등 주요 기업 현직자
-- 🛍️ **기업공략집 스토어**: 직무별/회사별 취업 가이드 구매
-- 📱 **반응형 디자인**: 모바일 우선 UI/UX
-- 🎨 **그린 테마**: 깔끔한 그린/화이트 색상 통일
-- ⚡ **성능 최적화**: React hooks 및 메모이제이션 활용
+- ?�� **멘토 발견**: 카드 ?��??�프 방식?�로 20명의 ?�기업 ?�직??멘토 ?�색
+- ?�� **?�시�?채팅**: Firebase Firestore 기반 1:1 ?�시�?채팅
+- ?�� **?�기업 멘토**: ?�성, LG, ?�이�? 카카????주요 기업 ?�직??
+- ?���?**기업공략�??�토??*: 직무�??�사�?취업 가?�드 구매
+- ?�� **반응???�자??*: 모바???�선 UI/UX
+- ?�� **그린 ?�마**: 깔끔??그린/?�이???�상 ?�일
+- ??**?�능 최적??*: React hooks �?메모?�제?�션 ?�용
 
-## 🛠️ 기술 스택
+## ?���?기술 ?�택
 
 - **Framework**: Next.js 14 (App Router)
 - **Language**: TypeScript
@@ -20,30 +20,30 @@ Next.js, TypeScript, Tailwind CSS, Firebase로 구축된 반응형 멘토-멘티
 - **Backend**: Firebase (Firestore Database)
 - **Deployment**: Vercel
 - **UI Components**: React
-- **최적화**: useMemo, useCallback, React.memo, dynamic imports
+- **최적??*: useMemo, useCallback, React.memo, dynamic imports
 
-## 🚀 배포
+## ?? 배포
 
 ### Vercel 배포
-1. Vercel에 프로젝트를 연결합니다
-2. 환경변수를 설정합니다 (아래 Firebase 설정 참고)
-3. 자동으로 배포됩니다
+1. Vercel???�로?�트�??�결?�니??
+2. ?�경변?��? ?�정?�니??(?�래 Firebase ?�정 참고)
+3. ?�동?�로 배포?�니??
 
-**주요 설정:**
+**주요 ?�정:**
 - Build Command: `npm run build`
 - Output Directory: `.next`
 - Install Command: `npm install`
 - Node.js Version: 18.x
 
-## 🔥 Firebase 설정
+## ?�� Firebase ?�정
 
-### 환경변수 설정
-1. `.env.example` 파일을 복사하여 `.env.local` 파일을 생성합니다:
+### ?�경변???�정
+1. `.env.example` ?�일??복사?�여 `.env.local` ?�일???�성?�니??
 ```bash
 cp .env.example .env.local
 ```
 
-2. `.env.local` 파일에 Firebase 프로젝트 정보를 입력합니다:
+2. `.env.local` ?�일??Firebase ?�로?�트 ?�보�??�력?�니??
 ```env
 NEXT_PUBLIC_FIREBASE_API_KEY=your_api_key_here
 NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN=your_auth_domain_here
@@ -54,42 +54,42 @@ NEXT_PUBLIC_FIREBASE_APP_ID=your_app_id_here
 NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID=your_measurement_id_here
 ```
 
-> ⚠️ **보안 주의**: `.env.local` 파일은 절대 Git에 커밋하지 마세요! 이 파일은 `.gitignore`에 포함되어 있습니다.
+> ?�️ **보안 주의**: `.env.local` ?�일?� ?��? Git??커밋?��? 마세?? ???�일?� `.gitignore`???�함?�어 ?�습?�다.
 
-> 📝 **Vercel 배포 시**: Vercel 대시보드 > Settings > Environment Variables에서 동일한 환경변수를 설정하세요.
+> ?�� **Vercel 배포 ??*: Vercel ?�?�보??> Settings > Environment Variables?�서 ?�일???�경변?��? ?�정?�세??
 
-### Firestore 데이터베이스 구조
+### Firestore ?�이?�베?�스 구조
 ```
 chats (collection)
-├── {chatId} (document)
-│   └── messages (subcollection)
-│       └── {messageId} (document)
-│           ├── text: string
-│           ├── sender: 'me' | 'other'
-│           ├── timestamp: Firestore Timestamp
-│           └── type: 'text' | 'audio' | 'date'
+?��??� {chatId} (document)
+??  ?��??� messages (subcollection)
+??      ?��??� {messageId} (document)
+??          ?��??� text: string
+??          ?��??� sender: 'me' | 'other'
+??          ?��??� timestamp: Firestore Timestamp
+??          ?��??� type: 'text' | 'audio' | 'date'
 ```
 
-### 실시간 채팅 작동 방식
-1. 사용자가 메시지를 입력하면 Firestore에 자동 저장
-2. `onSnapshot` 리스너가 새 메시지를 실시간으로 감지
-3. 모든 연결된 클라이언트에 즉시 동기화
+### ?�시�?채팅 ?�동 방식
+1. ?�용?��? 메시지�??�력?�면 Firestore???�동 ?�??
+2. `onSnapshot` 리스?��? ??메시지�??�시간으�?감�?
+3. 모든 ?�결???�라?�언?�에 즉시 ?�기??
 
-## 🚀 시작하기
+## ?? ?�작?�기
 
-### 설치
+### ?�치
 
 ```bash
 npm install
 ```
 
-### 개발 서버 실행
+### 개발 ?�버 ?�행
 
 ```bash
 npm run dev
 ```
 
-브라우저에서 [http://localhost:3000](http://localhost:3000)을 열어 결과를 확인하세요.
+브라?��??�서 [http://localhost:3000](http://localhost:3000)???�어 결과�??�인?�세??
 
 ### 빌드
 
@@ -97,100 +97,100 @@ npm run dev
 npm run build
 ```
 
-### 프로덕션 실행
+### ?�로?�션 ?�행
 
 ```bash
 npm start
 ```
 
-## 📁 프로젝트 구조
+## ?�� ?�로?�트 구조
 
 ```
 src/
-├── app/
-│   ├── chat/
-│   │   └── [id]/
-│   │       └── page.tsx    # 채팅 상세 페이지
-│   ├── layout.tsx          # 루트 레이아웃
-│   ├── page.tsx            # 홈 페이지 (채팅 목록)
-│   └── globals.css         # 글로벌 스타일
-└── lib/
-    └── utils.ts            # 유틸리티 함수
+?��??� app/
+??  ?��??� chat/
+??  ??  ?��??� [id]/
+??  ??      ?��??� page.tsx    # 채팅 ?�세 ?�이지
+??  ?��??� layout.tsx          # 루트 ?�이?�웃
+??  ?��??� page.tsx            # ???�이지 (채팅 목록)
+??  ?��??� globals.css         # 글로벌 ?��???
+?��??� lib/
+    ?��??� utils.ts            # ?�틸리티 ?�수
 ```
 
-## 🎨 주요 페이지
+## ?�� 주요 ?�이지
 
-### 홈 페이지 (채팅 목록)
-- 채팅 검색 기능
-- 카테고리 필터 (전체, 개인, 디자인, 업무, 즐겨찾기)
-- 온라인 상태 표시
-- 읽지 않은 메시지 수 표시
-- 다크 테마 네비게이션 바
+### ???�이지 (채팅 목록)
+- 채팅 검??기능
+- 카테고리 ?�터 (?�체, 개인, ?�자?? ?�무, 즐겨찾기)
+- ?�라???�태 ?�시
+- ?��? ?��? 메시지 ???�시
+- ?�크 ?�마 ?�비게이??�?
 
-### 채팅 페이지
-- 1:1 실시간 채팅 UI
-- 텍스트 메시지 전송/수신
-- 오디오 메시지 UI (파형 시각화)
-- 날짜 구분자
-- 타임스탬프 표시
-- 반응형 메시지 레이아웃
-- 그라데이션 말풍선
+### 채팅 ?�이지
+- 1:1 ?�시�?채팅 UI
+- ?�스??메시지 ?�송/?�신
+- ?�디??메시지 UI (?�형 ?�각??
+- ?�짜 구분??
+- ?�?�스?�프 ?�시
+- 반응??메시지 ?�이?�웃
+- 그라?�이??말풍??
 
-## ⚡ 성능 최적화
+## ???�능 최적??
 
-### 적용된 최적화
-- ✅ `useMemo`를 사용한 필터링 로직 메모이제이션
-- ✅ `useCallback`을 사용한 이벤트 핸들러 최적화
-- ✅ 불필요한 리렌더링 방지
-- ✅ 컴포넌트 외부에 상수 데이터 이동
-- ✅ 유틸리티 함수 분리
+### ?�용??최적??
+- ??`useMemo`�??�용???�터�?로직 메모?�제?�션
+- ??`useCallback`???�용???�벤???�들??최적??
+- ??불필?�한 리렌?�링 방�?
+- ??컴포?�트 ?��????�수 ?�이???�동
+- ???�틸리티 ?�수 분리
 
-### 접근성 (a11y)
-- ✅ 모든 인터랙티브 요소에 `aria-label` 추가
-- ✅ 키보드 네비게이션 지원
-- ✅ 시맨틱 HTML 사용
+### ?�근??(a11y)
+- ??모든 ?�터?�티�??�소??`aria-label` 추�?
+- ???�보???�비게이??지??
+- ???�맨??HTML ?�용
 
-자세한 내용은 [OPTIMIZATION.md](./OPTIMIZATION.md)를 참고하세요.
+?�세???�용?� [OPTIMIZATION.md](./OPTIMIZATION.md)�?참고?�세??
 
-## 📱 반응형 디자인
+## ?�� 반응???�자??
 
-모바일, 태블릿, 데스크톱 모든 화면 크기에서 최적화된 경험을 제공합니다.
+모바?? ?�블�? ?�스?�톱 모든 ?�면 ?�기?�서 최적?�된 경험???�공?�니??
 
-- **모바일**: 360px ~ 768px
-- **태블릿**: 768px ~ 1024px
-- **데스크톱**: 1024px 이상
+- **모바??*: 360px ~ 768px
+- **?�블�?*: 768px ~ 1024px
+- **?�스?�톱**: 1024px ?�상
 
-## 🎯 향후 개발 계획
+## ?�� ?�후 개발 계획
 
-### 단기 (1-2주)
-- [ ] React.memo를 사용한 채팅 아이템 메모이제이션
-- [ ] 가상 스크롤링 구현
-- [ ] 이미지 lazy loading
-- [ ] 에러 바운더리 추가
+### ?�기 (1-2�?
+- [ ] React.memo�??�용??채팅 ?�이??메모?�제?�션
+- [ ] 가???�크롤링 구현
+- [ ] ?��?지 lazy loading
+- [ ] ?�러 바운?�리 추�?
 
 ### 중기 (1개월)
-- [ ] PWA 지원 (오프라인 기능)
-- [ ] WebSocket을 통한 실시간 채팅
-- [ ] Firebase/Supabase 연동
-- [ ] 사용자 인증 (로그인/회원가입)
-- [ ] 푸시 알림 기능
-- [ ] 파일 전송 기능
+- [ ] PWA 지??(?�프?�인 기능)
+- [ ] WebSocket???�한 ?�시�?채팅
+- [ ] Firebase/Supabase ?�동
+- [ ] ?�용???�증 (로그???�원가??
+- [ ] ?�시 ?�림 기능
+- [ ] ?�일 ?�송 기능
 
-### 장기 (3개월)
-- [ ] 상태 관리 라이브러리 도입 (Zustand/Jotai)
-- [ ] 서버 사이드 렌더링 최적화
-- [ ] 국제화 (i18n) 지원
-- [ ] E2E 테스트 추가 (Playwright)
-- [ ] 이모지 및 리액션 기능
+### ?�기 (3개월)
+- [ ] ?�태 관�??�이브러�??�입 (Zustand/Jotai)
+- [ ] ?�버 ?�이???�더�?최적??
+- [ ] �?��??(i18n) 지??
+- [ ] E2E ?�스??추�? (Playwright)
+- [ ] ?�모지 �?리액??기능
 
-## 🌐 브라우저 지원
+## ?�� 브라?��? 지??
 
-- ✅ Chrome 90+
-- ✅ Firefox 88+
-- ✅ Safari 14+
-- ✅ Edge 90+
-- ✅ 모바일 브라우저 (iOS Safari, Chrome Mobile)
+- ??Chrome 90+
+- ??Firefox 88+
+- ??Safari 14+
+- ??Edge 90+
+- ??모바??브라?��? (iOS Safari, Chrome Mobile)
 
-## 📄 라이선스
+## ?�� ?�이?�스
 
 MIT License

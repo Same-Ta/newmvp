@@ -77,7 +77,7 @@ export default function ChatWelcomePage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
             </svg>
           </button>
-          <h1 className="text-xl font-bold text-gray-900">취준로그</h1>
+          <h1 className="text-xl font-bold text-gray-900">취준로드</h1>
         </div>
       </header>
 
@@ -90,7 +90,7 @@ export default function ChatWelcomePage() {
               <div className="w-12 h-12 bg-green-500 rounded-full"></div>
             </div>
             <h2 className="text-3xl font-bold text-gray-900 mb-3">
-              취준로그에 오신 것을<br/>환영합니다!
+              취준로드에 오신 것을<br/>환영합니다!
             </h2>
             <p className="text-gray-600 text-lg leading-relaxed">
               20명의 대기업 현직자 멘토들이<br/>
