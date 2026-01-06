@@ -29,6 +29,8 @@ function LandingPageContent() {
   const [showUserMenu, setShowUserMenu] = useState(false);
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
+  const [mentorForm, setMentorForm] = useState({ name: '', email: '', field: '' });
+  const [menteeForm, setMenteeForm] = useState({ email: '', question: '' });
 
   // URL 파라미터로 로그인 모달 표시
   useEffect(() => {
@@ -104,7 +106,28 @@ function LandingPageContent() {
 
   const closeMentorForm = () => {
     setMentorModalOpen(false);
+    setMentorForm({ name: '', email: '', field: '' });
     document.body.style.overflow = 'auto';
+  };
+
+  // 멘토 신청 제출
+  const handleMentorSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!mentorForm.name || !mentorForm.email || !mentorForm.field || !db) return;
+
+    try {
+      await addDoc(collection(db, 'mentor_applications'), {
+        name: mentorForm.name,
+        email: mentorForm.email,
+        field: mentorForm.field,
+        timestamp: serverTimestamp(),
+      });
+      alert('멘토 신청이 완료되었습니다!');
+      closeMentorForm();
+    } catch (error) {
+      console.error('멘토 신청 실패:', error);
+      alert('신청에 실패했습니다. 다시 시도해주세요.');
+    }
   };
 
   const openMenteeForm = () => {
@@ -114,7 +137,27 @@ function LandingPageContent() {
 
   const closeMenteeForm = () => {
     setMenteeModalOpen(false);
+    setMenteeForm({ email: '', question: '' });
     document.body.style.overflow = 'auto';
+  };
+
+  // 질문 제출
+  const handleMenteeSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!menteeForm.email || !menteeForm.question || !db) return;
+
+    try {
+      await addDoc(collection(db, 'questions'), {
+        email: menteeForm.email,
+        question: menteeForm.question,
+        timestamp: serverTimestamp(),
+      });
+      alert('질문이 전송되었습니다!');
+      closeMenteeForm();
+    } catch (error) {
+      console.error('질문 전송 실패:', error);
+      alert('전송에 실패했습니다. 다시 시도해주세요.');
+    }
   };
 
   const closeLoginModal = () => {
@@ -133,11 +176,26 @@ function LandingPageContent() {
       // 사용자 상태는 onAuthStateChanged에서 처리됨
       setShowLoginModal(false); // 로그인 성공 시 모달 닫기
       document.body.style.overflow = 'auto';
-    } catch (error) {
+    } catch (error: any) {
       console.error('로그인 실패:', error);
-      // 팝업 차단 에러는 조용히 처리
-      if (error instanceof Error && !error.message.includes('popup-blocked') && !error.message.includes('cancelled-popup')) {
-        alert('로그인에 실패했습니다. 다시 시도해주세요.');
+      console.error('에러 코드:', error?.code);
+      console.error('에러 메시지:', error?.message);
+      
+      // 사용자가 팝업을 닫은 경우
+      if (error?.code === 'auth/popup-closed-by-user' || error?.code === 'auth/cancelled-popup-request') {
+        // 아무것도 하지 않음
+      } 
+      // 승인되지 않은 도메인
+      else if (error?.code === 'auth/unauthorized-domain') {
+        alert('이 도메인은 Firebase 인증이 허용되지 않았습니다.\n\nFirebase Console > Authentication > Settings > Authorized domains에서\n현재 도메인을 추가해주세요.');
+      }
+      // 팝업 차단
+      else if (error?.code === 'auth/popup-blocked') {
+        alert('팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해주세요.');
+      }
+      // 기타 에러
+      else if (!error?.message?.includes('popup-blocked') && !error?.message?.includes('cancelled-popup')) {
+        alert(`로그인 실패: ${error?.code || '알 수 없는 오류'}\n\n문제가 계속되면 관리자에게 문의해주세요.`);
       }
     } finally {
       setIsLoggingIn(false);
@@ -967,20 +1025,41 @@ function LandingPageContent() {
               </button>
             </div>
             
-            <form className="space-y-4">
+            <form onSubmit={handleMentorSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">이름 *</label>
-                <input type="text" required className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="홍길동" />
+                <input 
+                  type="text" 
+                  required 
+                  value={mentorForm.name}
+                  onChange={(e) => setMentorForm({...mentorForm, name: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500" 
+                  placeholder="홍길동" 
+                />
               </div>
               
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">이메일 *</label>
-                <input type="email" required className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="example@email.com" />
+                <input 
+                  type="email" 
+                  required 
+                  value={mentorForm.email}
+                  onChange={(e) => setMentorForm({...mentorForm, email: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500" 
+                  placeholder="example@email.com" 
+                />
               </div>
               
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">분야 *</label>
-                <input type="text" required className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500" placeholder="예: 소프트웨어 개발, 마케팅, 디자인 등" />
+                <input 
+                  type="text" 
+                  required 
+                  value={mentorForm.field}
+                  onChange={(e) => setMentorForm({...mentorForm, field: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-green-500" 
+                  placeholder="예: 소프트웨어 개발, 마케팅, 디자인 등" 
+                />
               </div>
               
               <button type="submit" className="w-full py-4 bg-green-600 text-white font-bold rounded-xl hover:bg-green-700 transition-colors mt-6">
@@ -1000,15 +1079,29 @@ function LandingPageContent() {
               </button>
             </div>
             
-            <form className="space-y-4">
+            <form onSubmit={handleMenteeSubmit} className="space-y-4">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">이메일 *</label>
-                <input type="email" required className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500" placeholder="example@email.com" />
+                <input 
+                  type="email" 
+                  required 
+                  value={menteeForm.email}
+                  onChange={(e) => setMenteeForm({...menteeForm, email: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500" 
+                  placeholder="example@email.com" 
+                />
               </div>
               
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-2">질문 내용 *</label>
-                <textarea required rows={6} className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none" placeholder="궁금한 점을 자유롭게 작성해주세요"></textarea>
+                <textarea 
+                  required 
+                  rows={6} 
+                  value={menteeForm.question}
+                  onChange={(e) => setMenteeForm({...menteeForm, question: e.target.value})}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-emerald-500 resize-none" 
+                  placeholder="궁금한 점을 자유롭게 작성해주세요"
+                ></textarea>
               </div>
               
               <button type="submit" className="w-full py-4 bg-emerald-600 text-white font-bold rounded-xl hover:bg-emerald-700 transition-colors mt-6">
