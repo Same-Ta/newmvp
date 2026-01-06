@@ -6,7 +6,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Script from 'next/script';
 import { auth, googleProvider, db } from '@/lib/firebase';
-import { signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, User, setPersistence, browserLocalPersistence, browserSessionPersistence } from 'firebase/auth';
+import { signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, User } from 'firebase/auth';
 import { collection, addDoc, serverTimestamp, doc, setDoc, getDoc } from 'firebase/firestore';
 
 // 빌드 시 정적 생성 방지
@@ -31,25 +31,6 @@ function LandingPageContent() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [mentorForm, setMentorForm] = useState({ name: '', email: '', field: '' });
   const [menteeForm, setMenteeForm] = useState({ email: '', question: '' });
-
-  // 인앱 브라우저 감지
-  const isInAppBrowser = () => {
-    if (typeof navigator === 'undefined') return false;
-    const ua = navigator.userAgent || navigator.vendor;
-    return /FBAN|FBAV|Instagram|KAKAOTALK|Line|TwitterAndroid|TwitteriPhone|Telegram/i.test(ua);
-  };
-
-  // Storage 사용 가능 여부 체크
-  const isStorageAvailable = () => {
-    try {
-      const test = '__storage_test__';
-      localStorage.setItem(test, test);
-      localStorage.removeItem(test);
-      return true;
-    } catch (e) {
-      return false;
-    }
-  };
 
   // URL 파라미터로 로그인 모달 표시
   useEffect(() => {
@@ -212,28 +193,6 @@ function LandingPageContent() {
     
     setIsLoggingIn(true);
     try {
-      // 인앱 브라우저 감지
-      if (isInAppBrowser()) {
-        alert('⚠️ 인앱 브라우저에서는 로그인이 제한될 수 있습니다.\n\n아래 방법 중 하나를 시도해주세요:\n1. 우측 상단 메뉴(⋯)에서 "외부 브라우저로 열기" 선택\n2. Safari, Chrome 등의 브라우저에서 직접 열기');
-        setIsLoggingIn(false);
-        return;
-      }
-
-      // Storage 사용 가능 여부 체크
-      if (!isStorageAvailable()) {
-        alert('⚠️ 브라우저 설정에서 쿠키/저장소가 차단되어 있습니다.\n\n해결 방법:\n1. Safari: 설정 > Safari > "모든 쿠키 차단" 해제\n2. Chrome: 설정 > 개인정보 > 쿠키 허용');
-        setIsLoggingIn(false);
-        return;
-      }
-
-      // Firebase Auth persistence 설정 (localStorage 우선, 실패시 sessionStorage)
-      try {
-        await setPersistence(auth, browserLocalPersistence);
-      } catch (e) {
-        console.warn('localStorage persistence 실패, sessionStorage 사용:', e);
-        await setPersistence(auth, browserSessionPersistence);
-      }
-
       // 모바일 브라우저에서는 팝업이 차단되는 경우가 많으므로 리디렉트 방식 사용
       const isMobile = typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
       if (isMobile) {
@@ -264,17 +223,9 @@ function LandingPageContent() {
       else if (error?.code === 'auth/popup-blocked') {
         alert('팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해주세요.');
       }
-      // Storage 관련 에러
-      else if (error?.code === 'auth/web-storage-unsupported') {
-        alert('⚠️ 브라우저가 저장소를 지원하지 않습니다.\n\n해결 방법:\n1. 시크릿/프라이빗 모드를 해제하세요\n2. 쿠키를 허용해주세요\n3. 다른 브라우저를 시도해보세요');
-      }
-      // 네트워크 에러
-      else if (error?.code === 'auth/network-request-failed') {
-        alert('네트워크 연결을 확인해주세요.\n\nVPN이나 방화벽이 Firebase 접근을 차단하고 있을 수 있습니다.');
-      }
       // 기타 에러
       else if (!error?.message?.includes('popup-blocked') && !error?.message?.includes('cancelled-popup')) {
-        alert(`로그인 실패: ${error?.code || '알 수 없는 오류'}\n메시지: ${error?.message}\n\n문제가 계속되면 관리자에게 문의해주세요.`);
+        alert(`로그인 실패: ${error?.code || '알 수 없는 오류'}\n\n문제가 계속되면 관리자에게 문의해주세요.`);
       }
     } finally {
       setIsLoggingIn(false);
