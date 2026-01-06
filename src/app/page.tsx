@@ -239,17 +239,10 @@ function LandingPageContent() {
         console.warn('⚠️ Persistence 설정 실패, 기본값 사용:', e);
       }
 
-      // 모바일 브라우저에서는 팝업이 차단되는 경우가 많으므로 리디렉트 방식 사용
       const isMobile = typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
       console.log('📱 Device type:', isMobile ? 'Mobile' : 'Desktop');
       
-      if (isMobile) {
-        console.log('🔄 Starting redirect login...');
-        await signInWithRedirect(auth, googleProvider);
-        // 리디렉트가 발생하므로 이 함수는 여기서 종료됨
-        return;
-      }
-
+      // 모바일/데스크탑 모두 먼저 팝업 시도
       console.log('🪟 Starting popup login...');
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
@@ -266,13 +259,24 @@ function LandingPageContent() {
       if (error?.code === 'auth/popup-closed-by-user' || error?.code === 'auth/cancelled-popup-request') {
         // 아무것도 하지 않음
       } 
+      // 팝업 차단 - 리디렉트 방식으로 재시도 제안
+      else if (error?.code === 'auth/popup-blocked') {
+        const useRedirect = confirm('팝업이 차단되었습니다.\n\n다른 방식으로 로그인을 시도하시겠습니까?');
+        if (useRedirect) {
+          try {
+            console.log('🔄 Trying redirect login...');
+            await signInWithRedirect(auth, googleProvider);
+            // 리디렉트가 발생하므로 여기서 종료
+            return;
+          } catch (redirectError) {
+            console.error('Redirect 로그인 실패:', redirectError);
+            alert('로그인에 실패했습니다. 다시 시도해주세요.');
+          }
+        }
+      }
       // 승인되지 않은 도메인
       else if (error?.code === 'auth/unauthorized-domain') {
         alert('이 도메인은 Firebase 인증이 허용되지 않았습니다.\n\nFirebase Console > Authentication > Settings > Authorized domains에서\n현재 도메인을 추가해주세요.');
-      }
-      // 팝업 차단
-      else if (error?.code === 'auth/popup-blocked') {
-        alert('팝업이 차단되었습니다. 브라우저 설정에서 팝업을 허용해주세요.');
       }
       // 기타 에러
       else if (!error?.message?.includes('popup-blocked') && !error?.message?.includes('cancelled-popup')) {
