@@ -6,7 +6,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Script from 'next/script';
 import { auth, googleProvider, db } from '@/lib/firebase';
-import { signInWithPopup, signOut, onAuthStateChanged, User } from 'firebase/auth';
+import { signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, User } from 'firebase/auth';
 import { collection, addDoc, serverTimestamp, doc, setDoc, getDoc } from 'firebase/firestore';
 
 // 빌드 시 정적 생성 방지
@@ -67,6 +67,28 @@ function LandingPageContent() {
       window.removeEventListener('scroll', scrollReveal);
       window.removeEventListener('load', scrollReveal);
     };
+  }, []);
+
+  // 리디렉트 로그인 결과 처리 (signInWithRedirect 사용 시)
+  useEffect(() => {
+    let mounted = true;
+    if (!mounted) return;
+    getRedirectResult(auth)
+      .then((result) => {
+        if (result && result.user) {
+          setShowLoginModal(false);
+          document.body.style.overflow = 'auto';
+        }
+      })
+      .catch((err) => {
+        console.error('redirect login error:', err);
+        if (err?.code === 'auth/unauthorized-domain') {
+          alert('이 도메인은 Firebase 인증이 허용되지 않았습니다. Firebase Console에서 도메인을 추가해주세요.');
+        } else {
+          alert(`로그인 실패 (Redirect): ${err?.code || '알 수 없는 오류'}\n메시지: ${err?.message}`);
+        }
+      });
+    return () => { mounted = false; };
   }, []);
 
   // 로그인 상태 감지
@@ -171,6 +193,14 @@ function LandingPageContent() {
     
     setIsLoggingIn(true);
     try {
+      // 모바일 브라우저에서는 팝업이 차단되는 경우가 많으므로 리디렉트 방식 사용
+      const isMobile = typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      if (isMobile) {
+        await signInWithRedirect(auth, googleProvider);
+        // 리디렉트가 발생하므로 이 함수는 여기서 종료됨
+        return;
+      }
+
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
       // 사용자 상태는 onAuthStateChanged에서 처리됨
