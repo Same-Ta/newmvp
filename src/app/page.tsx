@@ -6,7 +6,7 @@ import { useEffect, useState, Suspense } from 'react';
 import { useSearchParams, useRouter } from 'next/navigation';
 import Script from 'next/script';
 import { auth, googleProvider, db } from '@/lib/firebase';
-import { signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, User } from 'firebase/auth';
+import { signInWithPopup, signInWithRedirect, getRedirectResult, signOut, onAuthStateChanged, User, setPersistence, browserLocalPersistence, inMemoryPersistence } from 'firebase/auth';
 import { collection, addDoc, serverTimestamp, doc, setDoc, getDoc } from 'firebase/firestore';
 
 // 빌드 시 정적 생성 방지
@@ -69,31 +69,69 @@ function LandingPageContent() {
     };
   }, []);
 
+  // Firebase Auth persistence 설정 (앱 로드 시 한 번만)
+  useEffect(() => {
+    const initAuth = async () => {
+      try {
+        // localStorage persistence 설정 (모바일 포함)
+        await setPersistence(auth, browserLocalPersistence);
+        console.log('✅ Auth persistence set to LOCAL');
+      } catch (error) {
+        console.error('❌ Persistence 설정 실패:', error);
+        // localStorage가 안 되면 메모리만 사용
+        try {
+          await setPersistence(auth, inMemoryPersistence);
+          console.log('⚠️ Auth persistence set to MEMORY (localStorage unavailable)');
+        } catch (e) {
+          console.error('❌ Memory persistence도 실패:', e);
+        }
+      }
+    };
+    initAuth();
+  }, []);
+
   // 리디렉트 로그인 결과 처리 (signInWithRedirect 사용 시)
   useEffect(() => {
     let mounted = true;
-    if (!mounted) return;
-    getRedirectResult(auth)
-      .then((result) => {
+    const checkRedirectResult = async () => {
+      try {
+        console.log('🔍 Checking redirect result...');
+        const result = await getRedirectResult(auth);
+        if (!mounted) return;
+        
         if (result && result.user) {
+          console.log('✅ Redirect login success:', result.user.email);
           setShowLoginModal(false);
           document.body.style.overflow = 'auto';
+        } else {
+          console.log('ℹ️ No redirect result (normal page load)');
         }
-      })
-      .catch((err) => {
-        console.error('redirect login error:', err);
+      } catch (err: any) {
+        if (!mounted) return;
+        console.error('❌ Redirect login error:', err);
+        console.error('Error code:', err?.code);
+        console.error('Error message:', err?.message);
+        
         if (err?.code === 'auth/unauthorized-domain') {
           alert('이 도메인은 Firebase 인증이 허용되지 않았습니다. Firebase Console에서 도메인을 추가해주세요.');
-        } else {
-          alert(`로그인 실패 (Redirect): ${err?.code || '알 수 없는 오류'}\n메시지: ${err?.message}`);
+        } else if (err?.code) {
+          alert(`로그인 실패 (Redirect): ${err?.code}\n메시지: ${err?.message}`);
         }
-      });
+      }
+    };
+    
+    checkRedirectResult();
     return () => { mounted = false; };
   }, []);
 
   // 로그인 상태 감지
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (currentUser) {
+        console.log('✅ 로그인 상태 감지됨:', currentUser.email, 'UID:', currentUser.uid);
+      } else {
+        console.log('❌ 로그아웃 상태');
+      }
       setUser(currentUser);
       if (currentUser && db) {
         // 닉네임 확인
@@ -193,16 +231,29 @@ function LandingPageContent() {
     
     setIsLoggingIn(true);
     try {
+      // Persistence 확인 및 설정
+      try {
+        await setPersistence(auth, browserLocalPersistence);
+        console.log('✅ Login persistence set to LOCAL');
+      } catch (e) {
+        console.warn('⚠️ Persistence 설정 실패, 기본값 사용:', e);
+      }
+
       // 모바일 브라우저에서는 팝업이 차단되는 경우가 많으므로 리디렉트 방식 사용
       const isMobile = typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+      console.log('📱 Device type:', isMobile ? 'Mobile' : 'Desktop');
+      
       if (isMobile) {
+        console.log('🔄 Starting redirect login...');
         await signInWithRedirect(auth, googleProvider);
         // 리디렉트가 발생하므로 이 함수는 여기서 종료됨
         return;
       }
 
+      console.log('🪟 Starting popup login...');
       const result = await signInWithPopup(auth, googleProvider);
       const user = result.user;
+      console.log('✅ Popup login success:', user.email);
       // 사용자 상태는 onAuthStateChanged에서 처리됨
       setShowLoginModal(false); // 로그인 성공 시 모달 닫기
       document.body.style.overflow = 'auto';
