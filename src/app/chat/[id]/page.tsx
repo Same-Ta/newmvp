@@ -78,6 +78,7 @@ export default function ChatPage() {
   const [showQuickActions, setShowQuickActions] = useState(true);
   const [showMentorSelector, setShowMentorSelector] = useState(false);
   const [currentCardIndex, setCurrentCardIndex] = useState(0);
+  const [authChecking, setAuthChecking] = useState(true); // 인증 확인 중 상태
   const messagesEndRef = useRef<HTMLDivElement>(null);
 
   // Firebase Auth 사용자 ID 초기화
@@ -85,7 +86,9 @@ export default function ChatPage() {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
       if (user) {
         setUserId(user.uid);
+        setAuthChecking(false);
       } else {
+        setAuthChecking(false);
         // 로그인이 필요한 경우 로그인 모달을 띄우도록 랜딩페이지로 리다이렉트
         router.push('/?login=required');
       }
@@ -205,6 +208,18 @@ export default function ChatPage() {
       handleSend();
     }
   }, [handleSend]);
+
+  // 인증 확인 중일 때 로딩 화면 표시
+  if (authChecking) {
+    return (
+      <div className="h-screen flex items-center justify-center bg-white">
+        <div className="text-center">
+          <div className="inline-block animate-spin rounded-full h-12 w-12 border-b-2 border-green-500"></div>
+          <p className="mt-4 text-gray-600">로딩 중...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="h-screen flex flex-col bg-white">
