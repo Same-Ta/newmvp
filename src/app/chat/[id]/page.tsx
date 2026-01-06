@@ -84,13 +84,19 @@ export default function ChatPage() {
   // Firebase Auth 사용자 ID 초기화
   useEffect(() => {
     const unsubscribe = onAuthStateChanged(auth, (user) => {
+      console.log('🔐 Chat page auth state:', user ? `✅ Logged in: ${user.email}` : '❌ Not logged in');
+      
       if (user) {
         setUserId(user.uid);
         setAuthChecking(false);
       } else {
-        setAuthChecking(false);
-        // 로그인이 필요한 경우 로그인 모달을 띄우도록 랜딩페이지로 리다이렉트
-        router.push('/?login=required');
+        // 약간의 지연 후 리다이렉트 (모바일에서 로그인 상태 로드 대기)
+        setTimeout(() => {
+          setAuthChecking(false);
+          // 로그인이 필요한 경우 로그인 모달을 띄우도록 랜딩페이지로 리다이렉트
+          console.log('❌ No user found, redirecting to login...');
+          router.push('/?login=required');
+        }, 500);
       }
     });
     return () => unsubscribe();

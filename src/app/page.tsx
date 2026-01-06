@@ -424,7 +424,7 @@ function LandingPageContent() {
                       setShowLoginModal(true);
                       document.body.style.overflow = 'hidden';
                     }}
-                    className="text-sm font-medium text-gray-600 hover:text-green-600 hidden md:block cursor-pointer"
+                    className="text-sm font-medium text-gray-600 hover:text-green-600 cursor-pointer"
                   >
                     로그인
                   </button>
