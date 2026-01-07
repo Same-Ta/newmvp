@@ -180,7 +180,6 @@ function LandingPageContent() {
         console.log('✅ Auth state changed - Logged in');
         console.log('📧 Email:', currentUser.email);
         console.log('🆔 UID:', currentUser.uid);
-        console.log('🔐 Token:', currentUser.getIdToken ? 'Available' : 'Not available');
         
         // 로그인 후 리다이렉트 처리 (팝업 로그인용)
         if (redirectAfterLogin) {
