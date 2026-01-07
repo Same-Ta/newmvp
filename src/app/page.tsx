@@ -33,6 +33,7 @@ function LandingPageContent() {
   const [menteeForm, setMenteeForm] = useState({ email: '', question: '' })
   const [redirectAfterLogin, setRedirectAfterLogin] = useState<string | null>(null);
   const [checkingRedirect, setCheckingRedirect] = useState(true); // 리디렉트 확인 중
+  const [authInitialized, setAuthInitialized] = useState(false); // Auth 초기화 완료
 
   // URL 파라미터로 로그인 모달 표시
   useEffect(() => {
@@ -75,95 +76,62 @@ function LandingPageContent() {
     };
   }, []);
 
-  // Firebase Auth 초기화 및 리디렉트 결과 처리 (순서 보장)
+  // 2단계: Firebase Auth 초기화 및 리디렉트 결과 처리
   useEffect(() => {
     let mounted = true;
     
     const initAuthAndCheckRedirect = async () => {
       try {
-        // 1단계: Persistence 설정 (가장 먼저!)
         console.log('🔧 Step 1: Setting up Firebase Auth persistence...');
         await setPersistence(auth, browserLocalPersistence);
-        console.log('✅ Persistence set to LOCAL (browserLocalPersistence)');
+        console.log('✅ Persistence set to browserLocalPersistence');
         
-        // 2단계: 리디렉트 결과 확인
+        // 약간의 지연 후 리디렉트 결과 확인 (Auth 초기화 대기)
+        await new Promise(resolve => setTimeout(resolve, 300));
+        
         console.log('🔍 Step 2: Checking redirect result...');
         const result = await getRedirectResult(auth);
         
         if (!mounted) {
-          console.log('⚠️ Component unmounted, stopping');
+          console.log('⚠️ Component unmounted during redirect check');
           return;
         }
         
         if (result && result.user) {
-          console.log('✅✅✅ REDIRECT LOGIN SUCCESS! ✅✅✅');
-          console.log('👤 User:', result.user.email);
+          console.log('🎉 getRedirectResult returned user!');
+          console.log('📧 User:', result.user.email);
           console.log('🆔 UID:', result.user.uid);
-          console.log('📱 Provider:', result.providerId);
-          
-          // localStorage에서 리다이렉트 경로 확인
-          const savedRedirect = localStorage.getItem('loginRedirect');
-          console.log('💾 Saved redirect path:', savedRedirect || 'none');
-          
-          if (savedRedirect) {
-            console.log('🔄 Will redirect to:', savedRedirect);
-            localStorage.removeItem('loginRedirect');
-            
-            // 약간의 지연 후 리다이렉트 (상태 업데이트 대기)
-            setTimeout(() => {
-              console.log('▶️ Redirecting now to:', savedRedirect);
-              router.push(savedRedirect);
-            }, 1000);
-          } else {
-            console.log('ℹ️ No redirect path, staying on home');
-            setShowLoginModal(false);
-            document.body.style.overflow = 'auto';
-          }
+          // onAuthStateChanged에서 처리하므로 여기서는 로그만
         } else {
-          console.log('ℹ️ No redirect result (normal page load or direct visit)');
-        }
-        
-        // 3단계: 현재 사용자 상태 확인
-        const currentUser = auth.currentUser;
-        if (currentUser) {
-          console.log('👤 Current user exists:', currentUser.email);
-        } else {
-          console.log('👤 No current user');
+          console.log('ℹ️ No redirect result (normal page load)');
+          // 3초 후에도 로그인이 안 되면 체크 종료
+          setTimeout(() => {
+            if (mounted && !auth.currentUser) {
+              console.log('⏱️ Timeout: No login detected, ending check');
+              setCheckingRedirect(false);
+              setAuthInitialized(true);
+            }
+          }, 3000);
         }
         
       } catch (error: any) {
         if (!mounted) return;
         
-        console.error('❌ Auth initialization or redirect check failed:', error);
+        console.error('❌ Auth initialization failed:', error);
         console.error('Error code:', error?.code);
         console.error('Error message:', error?.message);
-        console.error('Error stack:', error?.stack);
         
         // 에러 발생 시 저장된 리다이렉트 제거
         localStorage.removeItem('loginRedirect');
         
         if (error?.code === 'auth/unauthorized-domain') {
-          alert('이 도메인은 Firebase 인증이 허용되지 않았습니다.\n\nFirebase Console > Authentication > Settings > Authorized domains에서\n현재 도메인을 추가해주세요.');
+          alert('⚠️ 도메인 인증 오류\n\nFirebase Console > Authentication > Settings > Authorized domains에서\n현재 도메인을 추가해주세요.');
         } else if (error?.code === 'auth/operation-not-allowed') {
-          alert('Google 로그인이 Firebase에서 활성화되지 않았습니다.\n\nFirebase Console > Authentication > Sign-in method에서\nGoogle을 활성화해주세요.');
-        } else if (error?.code) {
-          alert(`로그인 실패: ${error?.code}\n\n${error?.message}`);
+          alert('⚠️ Google 로그인 미활성화\n\nFirebase Console > Authentication > Sign-in method에서\nGoogle을 활성화해주세요.');
         }
         
-        // localStorage 사용 불가 시 메모리 persistence로 대체
-        if (error?.message?.includes('localStorage')) {
-          try {
-            await setPersistence(auth, inMemoryPersistence);
-            console.log('⚠️ Fallback: Using memory persistence');
-          } catch (e) {
-            console.error('❌ Memory persistence도 실패:', e);
-          }
-        }
-      } finally {
-        if (mounted) {
-          setCheckingRedirect(false);
-          console.log('✅ Auth initialization completed');
-        }
+        setCheckingRedirect(false);
+        setAuthInitialized(true);
       }
     };
     
@@ -171,46 +139,83 @@ function LandingPageContent() {
     
     return () => { 
       mounted = false;
-      console.log('🧹 Auth init cleanup');
     };
-  }, [router]);
+  }, []);
 
-  // 로그인 상태 감지
+  // 1단계: Auth 상태 감지 (가장 먼저 설정!)
   useEffect(() => {
     let unsubscribed = false;
+    console.log('🔧 Setting up onAuthStateChanged listener...');
+    
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (unsubscribed) return;
       
+      console.log('🔔 Auth state changed event fired');
+      
       if (currentUser) {
-        console.log('✅ Auth state changed - Logged in');
-        console.log('📧 Email:', currentUser.email);
+        console.log('✅✅✅ USER LOGGED IN! ✅✅✅');
+        console.log('👤 Email:', currentUser.email);
         console.log('🆔 UID:', currentUser.uid);
+        console.log('📱 Provider:', currentUser.providerData[0]?.providerId);
         
-        // 로그인 후 리다이렉트 처리 (팝업 로그인용)
-        if (redirectAfterLogin) {
+        // 로그인 성공 - checkingRedirect 종료
+        setCheckingRedirect(false);
+        setAuthInitialized(true);
+        
+        // localStorage에서 리다이렉트 경로 확인
+        const savedRedirect = localStorage.getItem('loginRedirect');
+        console.log('💾 Saved redirect:', savedRedirect || 'none');
+        
+        // 팝업 로그인용 리다이렉트 처리
+        if (redirectAfterLogin && !savedRedirect) {
           console.log('🔄 Popup login redirect to:', redirectAfterLogin);
           const redirectPath = redirectAfterLogin;
           setRedirectAfterLogin(null);
-          router.push(redirectPath);
-          return; // 닉네임 체크 건너뛰기
+          setTimeout(() => {
+            router.push(redirectPath);
+          }, 500);
+          return;
         }
+        
+        // 리디렉트 로그인용 경로 복원
+        if (savedRedirect) {
+          console.log('🔄 Restoring redirect path:', savedRedirect);
+          localStorage.removeItem('loginRedirect');
+          setTimeout(() => {
+            console.log('▶️ Redirecting to:', savedRedirect);
+            router.push(savedRedirect);
+          }, 1000);
+          return;
+        }
+        
+        // 로그인 성공, 모달 닫기
+        setShowLoginModal(false);
+        document.body.style.overflow = 'auto';
       } else {
-        console.log('❌ Auth state changed - Not logged in');
+        console.log('❌ No user - logged out state');
+        setCheckingRedirect(false);
+        setAuthInitialized(true);
       }
+      
       setUser(currentUser);
+      
       if (currentUser && db) {
         // 닉네임 확인
-        const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
-        if (userDoc.exists()) {
-          setUserNickname(userDoc.data().nickname || '');
-        } else {
-          // 닉네임이 없으면 설정 모달 표시
-          setShowNicknameModal(true);
+        try {
+          const userDoc = await getDoc(doc(db, 'users', currentUser.uid));
+          if (userDoc.exists()) {
+            setUserNickname(userDoc.data().nickname || '');
+          } else {
+            setShowNicknameModal(true);
+          }
+        } catch (error) {
+          console.error('❌ Failed to fetch user nickname:', error);
         }
       }
     });
     
     return () => {
+      console.log('🧹 Cleaning up onAuthStateChanged listener');
       unsubscribed = true;
       unsubscribe();
     };
@@ -472,12 +477,13 @@ function LandingPageContent() {
   };
 
   // 리디렉트 확인 중 로딩 표시
-  if (checkingRedirect) {
+  if (checkingRedirect && !authInitialized) {
     return (
       <div className="min-h-screen bg-white flex items-center justify-center">
         <div className="text-center">
           <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
-          <p className="text-gray-600">로그인 확인 중...</p>
+          <p className="text-gray-600 text-lg font-medium">로그인 확인 중...</p>
+          <p className="text-gray-400 text-sm mt-2">잠시만 기다려주세요</p>
         </div>
       </div>
     );
