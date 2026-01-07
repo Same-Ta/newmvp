@@ -32,6 +32,7 @@ function LandingPageContent() {
   const [mentorForm, setMentorForm] = useState({ name: '', email: '', field: '' });
   const [menteeForm, setMenteeForm] = useState({ email: '', question: '' })
   const [redirectAfterLogin, setRedirectAfterLogin] = useState<string | null>(null);
+  const [checkingRedirect, setCheckingRedirect] = useState(true); // 리디렉트 확인 중
 
   // URL 파라미터로 로그인 모달 표시
   useEffect(() => {
@@ -78,9 +79,18 @@ function LandingPageContent() {
   useEffect(() => {
     const initAuth = async () => {
       try {
+        console.log('🔧 Initializing Firebase Auth...');
         // localStorage persistence 설정 (모바일 포함)
         await setPersistence(auth, browserLocalPersistence);
-        console.log('✅ Auth persistence set to LOCAL');
+        console.log('✅ Auth persistence set to LOCAL (browserLocalPersistence)');
+        
+        // 현재 사용자 확인
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          console.log('👤 Current user on init:', currentUser.email);
+        } else {
+          console.log('👤 No current user on init');
+        }
       } catch (error) {
         console.error('❌ Persistence 설정 실패:', error);
         // localStorage가 안 되면 메모리만 사용
@@ -102,17 +112,28 @@ function LandingPageContent() {
       try {
         console.log('🔍 Checking redirect result...');
         const result = await getRedirectResult(auth);
-        if (!mounted) return;
+        
+        if (!mounted) {
+          console.log('⚠️ Component unmounted, skipping redirect result');
+          return;
+        }
         
         if (result && result.user) {
-          console.log('✅ Redirect login success:', result.user.email);
+          console.log('✅ Redirect login success!');
+          console.log('📧 User email:', result.user.email);
+          console.log('🆔 User UID:', result.user.uid);
           
           // localStorage에서 리다이렉트 경로 확인
           const savedRedirect = localStorage.getItem('loginRedirect');
+          console.log('💾 Saved redirect path:', savedRedirect);
+          
           if (savedRedirect) {
-            console.log('🔄 Restoring redirect path:', savedRedirect);
+            console.log('🔄 Redirecting to:', savedRedirect);
             localStorage.removeItem('loginRedirect');
-            router.push(savedRedirect);
+            // 약간의 지연 후 리다이렉트 (상태 업데이트 대기)
+            setTimeout(() => {
+              router.push(savedRedirect);
+            }, 500);
           } else {
             setShowLoginModal(false);
             document.body.style.overflow = 'auto';
@@ -134,29 +155,43 @@ function LandingPageContent() {
         } else if (err?.code) {
           alert(`로그인 실패 (Redirect): ${err?.code}\n메시지: ${err?.message}`);
         }
+      } finally {
+        if (mounted) {
+          setCheckingRedirect(false);
+          console.log('✅ Redirect check completed');
+        }
       }
     };
     
     checkRedirectResult();
-    return () => { mounted = false; };
+    return () => { 
+      mounted = false;
+      console.log('🧹 Redirect check cleanup');
+    };
   }, [router]);
 
   // 로그인 상태 감지
   useEffect(() => {
+    let unsubscribed = false;
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
+      if (unsubscribed) return;
+      
       if (currentUser) {
-        console.log('✅ 로그인 상태 감지됨:', currentUser.email, 'UID:', currentUser.uid);
+        console.log('✅ Auth state changed - Logged in');
+        console.log('📧 Email:', currentUser.email);
+        console.log('🆔 UID:', currentUser.uid);
+        console.log('🔐 Token:', currentUser.getIdToken ? 'Available' : 'Not available');
         
-        // 로그인 후 리다이렉트 처리
+        // 로그인 후 리다이렉트 처리 (팝업 로그인용)
         if (redirectAfterLogin) {
-          console.log('🔄 Redirecting to:', redirectAfterLogin);
+          console.log('🔄 Popup login redirect to:', redirectAfterLogin);
           const redirectPath = redirectAfterLogin;
           setRedirectAfterLogin(null);
           router.push(redirectPath);
           return; // 닉네임 체크 건너뛰기
         }
       } else {
-        console.log('❌ 로그아웃 상태');
+        console.log('❌ Auth state changed - Not logged in');
       }
       setUser(currentUser);
       if (currentUser && db) {
@@ -170,7 +205,11 @@ function LandingPageContent() {
         }
       }
     });
-    return () => unsubscribe();
+    
+    return () => {
+      unsubscribed = true;
+      unsubscribe();
+    };
   }, [redirectAfterLogin, router]);
 
   useEffect(() => {
@@ -256,39 +295,38 @@ function LandingPageContent() {
     if (isLoggingIn) return; // 이미 로그인 중이면 중복 호출 방지
     
     setIsLoggingIn(true);
+    console.log('🚀 Starting Google login process...');
+    
     try {
-      // Persistence 확인 및 설정
-      try {
-        await setPersistence(auth, browserLocalPersistence);
-        console.log('✅ Login persistence set to LOCAL');
-      } catch (e) {
-        console.warn('⚠️ Persistence 설정 실패, 기본값 사용:', e);
-      }
+      // Persistence 확인 및 설정 (중요!)
+      console.log('🔧 Setting persistence...');
+      await setPersistence(auth, browserLocalPersistence);
+      console.log('✅ Persistence set to browserLocalPersistence');
 
       const isMobile = typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
       const isIOS = typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent);
-      console.log('📱 Device type:', isMobile ? 'Mobile' : 'Desktop', isIOS ? '(iOS)' : '');
+      console.log('📱 Device:', isMobile ? 'Mobile' : 'Desktop', isIOS ? '(iOS)' : '');
+      console.log('🌐 User Agent:', navigator.userAgent);
       
       let loginSuccess = false;
       
       // 모바일(특히 iOS)에서는 바로 리디렉트 사용
       if (isMobile) {
-        console.log('📱 Mobile detected, using redirect login for better compatibility...');
-        try {
-          // 리다이렉트 경로를 localStorage에 저장
-          if (redirectAfterLogin) {
-            console.log('💾 Saving redirect path to localStorage:', redirectAfterLogin);
-            localStorage.setItem('loginRedirect', redirectAfterLogin);
-          }
-          
-          await signInWithRedirect(auth, googleProvider);
-          // 리디렉트가 발생하므로 여기서 종료
-          return;
-        } catch (redirectError: any) {
-          console.error('❌ Redirect login failed:', redirectError);
-          localStorage.removeItem('loginRedirect');
-          throw redirectError;
+        console.log('📱 Using redirect login for mobile...');
+        
+        // 리다이렉트 경로를 localStorage에 저장
+        if (redirectAfterLogin) {
+          console.log('💾 Saving redirect:', redirectAfterLogin);
+          localStorage.setItem('loginRedirect', redirectAfterLogin);
+        } else {
+          console.log('ℹ️ No redirect path to save');
         }
+        
+        console.log('🔄 Calling signInWithRedirect...');
+        await signInWithRedirect(auth, googleProvider);
+        console.log('✅ signInWithRedirect called (redirecting...)');
+        // 리디렉트가 발생하므로 여기서 종료
+        return;
       }
       
       // 데스크탑에서는 팝업 시도
@@ -430,6 +468,18 @@ function LandingPageContent() {
       setIsSubmitting(false);
     }
   };
+
+  // 리디렉트 확인 중 로딩 표시
+  if (checkingRedirect) {
+    return (
+      <div className="min-h-screen bg-white flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-16 h-16 border-4 border-green-500 border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-gray-600">로그인 확인 중...</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <>
