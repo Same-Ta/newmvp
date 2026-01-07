@@ -30,13 +30,18 @@ function LandingPageContent() {
   const [isLoggingIn, setIsLoggingIn] = useState(false);
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [mentorForm, setMentorForm] = useState({ name: '', email: '', field: '' });
-  const [menteeForm, setMenteeForm] = useState({ email: '', question: '' });
+  const [menteeForm, setMenteeForm] = useState({ email: '', question: '' })
+  const [redirectAfterLogin, setRedirectAfterLogin] = useState<string | null>(null);
 
   // URL 파라미터로 로그인 모달 표시
   useEffect(() => {
     const loginRequired = searchParams.get('login') === 'required';
+    const redirectTo = searchParams.get('redirect');
     if (loginRequired && !user) {
       setShowLoginModal(true);
+      if (redirectTo) {
+        setRedirectAfterLogin(redirectTo);
+      }
       document.body.style.overflow = 'hidden';
       // URL에서 파라미터 제거 (새로고침 시 다시 안 뜨도록)
       router.replace('/', { scroll: false });
