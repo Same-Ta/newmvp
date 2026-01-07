@@ -31,4 +31,10 @@ const db: Firestore = getFirestore(app);
 const auth: Auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 
+// Google Provider 설정 - 모바일 최적화
+googleProvider.setCustomParameters({
+  prompt: 'select_account', // 계정 선택 화면 표시
+  display: 'popup' // 팝업 모드 우선
+});
+
 export { app, db, auth, googleProvider };

@@ -134,6 +134,15 @@ function LandingPageContent() {
     const unsubscribe = onAuthStateChanged(auth, async (currentUser) => {
       if (currentUser) {
         console.log('✅ 로그인 상태 감지됨:', currentUser.email, 'UID:', currentUser.uid);
+        
+        // 로그인 후 리다이렉트 처리
+        if (redirectAfterLogin) {
+          console.log('🔄 Redirecting to:', redirectAfterLogin);
+          const redirectPath = redirectAfterLogin;
+          setRedirectAfterLogin(null);
+          router.push(redirectPath);
+          return; // 닉네임 체크 건너뛰기
+        }
       } else {
         console.log('❌ 로그아웃 상태');
       }
@@ -150,7 +159,7 @@ function LandingPageContent() {
       }
     });
     return () => unsubscribe();
-  }, []);
+  }, [redirectAfterLogin, router]);
 
   useEffect(() => {
     // Lucide icons initialization
@@ -245,16 +254,65 @@ function LandingPageContent() {
       }
 
       const isMobile = typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-      console.log('📱 Device type:', isMobile ? 'Mobile' : 'Desktop');
+      const isIOS = typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent);
+      console.log('📱 Device type:', isMobile ? 'Mobile' : 'Desktop', isIOS ? '(iOS)' : '');
       
-      // 모바일/데스크탑 모두 먼저 팝업 시도
-      console.log('🪟 Starting popup login...');
-      const result = await signInWithPopup(auth, googleProvider);
-      const user = result.user;
-      console.log('✅ Popup login success:', user.email);
-      // 사용자 상태는 onAuthStateChanged에서 처리됨
-      setShowLoginModal(false); // 로그인 성공 시 모달 닫기
-      document.body.style.overflow = 'auto';
+      let loginSuccess = false;
+      
+      // 모바일(특히 iOS)에서는 바로 리디렉트 사용
+      if (isMobile) {
+        console.log('📱 Mobile detected, using redirect login for better compatibility...');
+        try {
+          await signInWithRedirect(auth, googleProvider);
+          // 리디렉트가 발생하므로 여기서 종료
+          return;
+        } catch (redirectError: any) {
+          console.error('❌ Redirect login failed:', redirectError);
+          throw redirectError;
+        }
+      }
+      
+      // 데스크탑에서는 팝업 시도
+      try {
+        console.log('🪟 Starting popup login...');
+        const result = await signInWithPopup(auth, googleProvider);
+        const user = result.user;
+        console.log('✅ Popup login success:', user.email);
+        loginSuccess = true;
+      } catch (popupError: any) {
+        console.log('❌ Popup failed, trying redirect...', popupError?.code);
+        
+        // 팝업이 실패하면 리디렉트 시도
+        if (popupError?.code === 'auth/popup-blocked' || 
+            popupError?.code === 'auth/popup-closed-by-user' ||
+            popupError?.code === 'auth/cancelled-popup-request') {
+          
+          // 팝업 닫기는 사용자의 의도이므로 아무것도 하지 않음
+          if (popupError?.code === 'auth/popup-closed-by-user' || 
+              popupError?.code === 'auth/cancelled-popup-request') {
+            return;
+          }
+          
+          // 팝업 차단은 리디렉트로 재시도
+          try {
+            console.log('🔄 Popup blocked, trying redirect login...');
+            await signInWithRedirect(auth, googleProvider);
+            // 리디렉트가 발생하므로 여기서 종료
+            return;
+          } catch (redirectError: any) {
+            console.error('❌ Redirect login failed:', redirectError);
+            throw redirectError;
+          }
+        } else {
+          throw popupError;
+        }
+      }
+      
+      if (loginSuccess) {
+        // 로그인 성공 시 모달 닫기
+        setShowLoginModal(false);
+        document.body.style.overflow = 'auto';
+      }
     } catch (error: any) {
       console.error('로그인 실패:', error);
       console.error('에러 코드:', error?.code);
@@ -264,27 +322,12 @@ function LandingPageContent() {
       if (error?.code === 'auth/popup-closed-by-user' || error?.code === 'auth/cancelled-popup-request') {
         // 아무것도 하지 않음
       } 
-      // 팝업 차단 - 리디렉트 방식으로 재시도 제안
-      else if (error?.code === 'auth/popup-blocked') {
-        const useRedirect = confirm('팝업이 차단되었습니다.\n\n다른 방식으로 로그인을 시도하시겠습니까?');
-        if (useRedirect) {
-          try {
-            console.log('🔄 Trying redirect login...');
-            await signInWithRedirect(auth, googleProvider);
-            // 리디렉트가 발생하므로 여기서 종료
-            return;
-          } catch (redirectError) {
-            console.error('Redirect 로그인 실패:', redirectError);
-            alert('로그인에 실패했습니다. 다시 시도해주세요.');
-          }
-        }
-      }
       // 승인되지 않은 도메인
       else if (error?.code === 'auth/unauthorized-domain') {
         alert('이 도메인은 Firebase 인증이 허용되지 않았습니다.\n\nFirebase Console > Authentication > Settings > Authorized domains에서\n현재 도메인을 추가해주세요.');
       }
       // 기타 에러
-      else if (!error?.message?.includes('popup-blocked') && !error?.message?.includes('cancelled-popup')) {
+      else {
         alert(`로그인 실패: ${error?.code || '알 수 없는 오류'}\n\n문제가 계속되면 관리자에게 문의해주세요.`);
       }
     } finally {

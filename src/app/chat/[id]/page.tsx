@@ -95,12 +95,12 @@ export default function ChatPage() {
           setAuthChecking(false);
           // 로그인이 필요한 경우 로그인 모달을 띄우도록 랜딩페이지로 리다이렉트
           console.log('❌ No user found, redirecting to login...');
-          router.push('/?login=required');
+          router.push(`/?login=required&redirect=${encodeURIComponent(`/chat/${mentorId}`)}`);
         }, 500);
       }
     });
     return () => unsubscribe();
-  }, [router]);
+  }, [router, mentorId]);
 
   // 멘토 목록 생성
   const mentorList = Object.entries(chatInfo).map(([id, info]) => ({
