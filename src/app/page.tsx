@@ -316,74 +316,50 @@ function LandingPageContent() {
       console.log('🌐 User Agent:', navigator.userAgent);
       console.log('🔄 Redirect after login:', redirectAfterLogin || 'none');
       
-      let loginSuccess = false;
-      
-      // 모바일에서는 리디렉트 사용
-      if (isMobile) {
-        console.log('📱 Using REDIRECT login for mobile...');
-        
-        // 리다이렉트 경로를 localStorage에 저장
-        if (redirectAfterLogin) {
-          console.log('💾 Saving to localStorage:', redirectAfterLogin);
-          localStorage.setItem('loginRedirect', redirectAfterLogin);
-          console.log('✅ Saved successfully');
-        }
-        
-        console.log('🔄 Calling signInWithRedirect...');
-        await signInWithRedirect(auth, googleProvider);
-        console.log('✅ signInWithRedirect called - will redirect to Google');
-        // 리디렉트가 발생하므로 여기서 종료
-        return;
-      }
-      
-      // 데스크탑에서는 팝업 시도
-      console.log('🪟 Using POPUP login for desktop...');
+      // 모든 기기에서 먼저 팝업 시도 (iOS Safari에서도 팝업이 더 안정적)
+      console.log('🪟 Trying POPUP login first (works better on mobile)...');
       try {
         const result = await signInWithPopup(auth, googleProvider);
         const user = result.user;
         console.log('✅ Popup login SUCCESS:', user.email);
-        loginSuccess = true;
-      } catch (popupError: any) {
-        console.log('❌ Popup failed, trying redirect...', popupError?.code);
         
-        // 팝업이 실패하면 리디렉트 시도
-        if (popupError?.code === 'auth/popup-blocked' || 
-            popupError?.code === 'auth/popup-closed-by-user' ||
+        // 로그인 성공 - onAuthStateChanged에서 처리됨
+        setShowLoginModal(false);
+        document.body.style.overflow = 'auto';
+        return;
+        
+      } catch (popupError: any) {
+        console.log('❌ Popup error:', popupError?.code, popupError?.message);
+        
+        // 사용자가 팝업을 닫은 경우 - 아무것도 하지 않음
+        if (popupError?.code === 'auth/popup-closed-by-user' || 
             popupError?.code === 'auth/cancelled-popup-request') {
+          console.log('ℹ️ User closed popup, doing nothing');
+          return;
+        }
+        
+        // 팝업 차단된 경우에만 리디렉트로 폴백
+        if (popupError?.code === 'auth/popup-blocked') {
+          console.log('⚠️ Popup blocked, falling back to redirect...');
           
-          // 팝업 닫기는 사용자의 의도이므로 아무것도 하지 않음
-          if (popupError?.code === 'auth/popup-closed-by-user' || 
-              popupError?.code === 'auth/cancelled-popup-request') {
-            return;
+          // 리다이렉트 경로를 localStorage에 저장
+          if (redirectAfterLogin) {
+            console.log('💾 Saving to localStorage:', redirectAfterLogin);
+            localStorage.setItem('loginRedirect', redirectAfterLogin);
           }
           
-          // 팝업 차단은 리디렉트로 재시도
           try {
-            console.log('🔄 Popup blocked, trying redirect login...');
-            
-            // 리다이렉트 경로를 localStorage에 저장
-            if (redirectAfterLogin) {
-              console.log('💾 Saving redirect path to localStorage:', redirectAfterLogin);
-              localStorage.setItem('loginRedirect', redirectAfterLogin);
-            }
-            
             await signInWithRedirect(auth, googleProvider);
-            // 리디렉트가 발생하므로 여기서 종료
             return;
           } catch (redirectError: any) {
-            console.error('❌ Redirect login failed:', redirectError);
+            console.error('❌ Redirect also failed:', redirectError);
             localStorage.removeItem('loginRedirect');
             throw redirectError;
           }
-        } else {
-          throw popupError;
         }
-      }
-      
-      if (loginSuccess) {
-        // 로그인 성공 시 모달 닫기
-        setShowLoginModal(false);
-        document.body.style.overflow = 'auto';
+        
+        // 다른 에러는 그대로 throw
+        throw popupError;
       }
     } catch (error: any) {
       console.error('로그인 실패:', error);
