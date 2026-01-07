@@ -93,9 +93,10 @@ export default function ChatPage() {
         // 약간의 지연 후 리다이렉트 (모바일에서 로그인 상태 로드 대기)
         setTimeout(() => {
           setAuthChecking(false);
-          // 로그인이 필요한 경우 로그인 모달을 띄우도록 랜딩페이지로 리다이렉트
-          console.log('❌ No user found, redirecting to login...');
-          router.push('/?login=required');
+          // 로그인이 필요한 경우 알림 후 랜딩페이지로 이동
+          console.log('❌ No user found, redirecting to home...');
+          alert('로그인 후 이용해주시기 바랍니다.');
+          router.push('/');
         }, 500);
       }
     });
