@@ -106,8 +106,17 @@ function LandingPageContent() {
         
         if (result && result.user) {
           console.log('✅ Redirect login success:', result.user.email);
-          setShowLoginModal(false);
-          document.body.style.overflow = 'auto';
+          
+          // localStorage에서 리다이렉트 경로 확인
+          const savedRedirect = localStorage.getItem('loginRedirect');
+          if (savedRedirect) {
+            console.log('🔄 Restoring redirect path:', savedRedirect);
+            localStorage.removeItem('loginRedirect');
+            router.push(savedRedirect);
+          } else {
+            setShowLoginModal(false);
+            document.body.style.overflow = 'auto';
+          }
         } else {
           console.log('ℹ️ No redirect result (normal page load)');
         }
@@ -116,6 +125,9 @@ function LandingPageContent() {
         console.error('❌ Redirect login error:', err);
         console.error('Error code:', err?.code);
         console.error('Error message:', err?.message);
+        
+        // 에러 발생 시 저장된 리다이렉트 제거
+        localStorage.removeItem('loginRedirect');
         
         if (err?.code === 'auth/unauthorized-domain') {
           alert('이 도메인은 Firebase 인증이 허용되지 않았습니다. Firebase Console에서 도메인을 추가해주세요.');
@@ -127,7 +139,7 @@ function LandingPageContent() {
     
     checkRedirectResult();
     return () => { mounted = false; };
-  }, []);
+  }, [router]);
 
   // 로그인 상태 감지
   useEffect(() => {
@@ -263,11 +275,18 @@ function LandingPageContent() {
       if (isMobile) {
         console.log('📱 Mobile detected, using redirect login for better compatibility...');
         try {
+          // 리다이렉트 경로를 localStorage에 저장
+          if (redirectAfterLogin) {
+            console.log('💾 Saving redirect path to localStorage:', redirectAfterLogin);
+            localStorage.setItem('loginRedirect', redirectAfterLogin);
+          }
+          
           await signInWithRedirect(auth, googleProvider);
           // 리디렉트가 발생하므로 여기서 종료
           return;
         } catch (redirectError: any) {
           console.error('❌ Redirect login failed:', redirectError);
+          localStorage.removeItem('loginRedirect');
           throw redirectError;
         }
       }
@@ -296,11 +315,19 @@ function LandingPageContent() {
           // 팝업 차단은 리디렉트로 재시도
           try {
             console.log('🔄 Popup blocked, trying redirect login...');
+            
+            // 리다이렉트 경로를 localStorage에 저장
+            if (redirectAfterLogin) {
+              console.log('💾 Saving redirect path to localStorage:', redirectAfterLogin);
+              localStorage.setItem('loginRedirect', redirectAfterLogin);
+            }
+            
             await signInWithRedirect(auth, googleProvider);
             // 리디렉트가 발생하므로 여기서 종료
             return;
           } catch (redirectError: any) {
             console.error('❌ Redirect login failed:', redirectError);
+            localStorage.removeItem('loginRedirect');
             throw redirectError;
           }
         } else {
