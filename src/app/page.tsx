@@ -31,19 +31,14 @@ function LandingPageContent() {
   const [showLoginModal, setShowLoginModal] = useState(false);
   const [mentorForm, setMentorForm] = useState({ name: '', email: '', field: '' });
   const [menteeForm, setMenteeForm] = useState({ email: '', question: '' })
-  const [redirectAfterLogin, setRedirectAfterLogin] = useState<string | null>(null);
   const [checkingRedirect, setCheckingRedirect] = useState(true); // 리디렉트 확인 중
   const [authInitialized, setAuthInitialized] = useState(false); // Auth 초기화 완료
 
   // URL 파라미터로 로그인 모달 표시
   useEffect(() => {
     const loginRequired = searchParams.get('login') === 'required';
-    const redirectTo = searchParams.get('redirect');
     if (loginRequired && !user) {
       setShowLoginModal(true);
-      if (redirectTo) {
-        setRedirectAfterLogin(redirectTo);
-      }
       document.body.style.overflow = 'hidden';
       // URL에서 파라미터 제거 (새로고침 시 다시 안 뜨도록)
       router.replace('/', { scroll: false });
@@ -162,35 +157,10 @@ function LandingPageContent() {
         setCheckingRedirect(false);
         setAuthInitialized(true);
         
-        // localStorage에서 리다이렉트 경로 확인
-        const savedRedirect = localStorage.getItem('loginRedirect');
-        console.log('💾 Saved redirect:', savedRedirect || 'none');
-        
-        // 팝업 로그인용 리다이렉트 처리
-        if (redirectAfterLogin && !savedRedirect) {
-          console.log('🔄 Popup login redirect to:', redirectAfterLogin);
-          const redirectPath = redirectAfterLogin;
-          setRedirectAfterLogin(null);
-          setTimeout(() => {
-            router.push(redirectPath);
-          }, 500);
-          return;
-        }
-        
-        // 리디렉트 로그인용 경로 복원
-        if (savedRedirect) {
-          console.log('🔄 Restoring redirect path:', savedRedirect);
-          localStorage.removeItem('loginRedirect');
-          setTimeout(() => {
-            console.log('▶️ Redirecting to:', savedRedirect);
-            router.push(savedRedirect);
-          }, 1000);
-          return;
-        }
-        
-        // 로그인 성공, 모달 닫기
+        // 로그인 성공 시 모달 닫기 (랜딩페이지에 머물기)
         setShowLoginModal(false);
         document.body.style.overflow = 'auto';
+        localStorage.removeItem('loginRedirect');
       } else {
         console.log('❌ No user - logged out state');
         setCheckingRedirect(false);
@@ -219,7 +189,7 @@ function LandingPageContent() {
       unsubscribed = true;
       unsubscribe();
     };
-  }, [redirectAfterLogin, router]);
+  }, [router]);
 
   useEffect(() => {
     // Lucide icons initialization
@@ -310,74 +280,39 @@ function LandingPageContent() {
     console.log('🚀 ========== STARTING GOOGLE LOGIN ==========');
     
     try {
-      const isMobile = typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
-      const isIOS = typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent);
-      console.log('📱 Device:', isMobile ? 'Mobile' : 'Desktop', isIOS ? '(iOS)' : '');
-      console.log('🌐 User Agent:', navigator.userAgent);
-      console.log('🔄 Redirect after login:', redirectAfterLogin || 'none');
+      // 팝업 로그인 시도
+      console.log('🪟 Trying POPUP login...');
+      const result = await signInWithPopup(auth, googleProvider);
+      console.log('✅ Login SUCCESS:', result.user.email);
       
-      // 모든 기기에서 먼저 팝업 시도 (iOS Safari에서도 팝업이 더 안정적)
-      console.log('🪟 Trying POPUP login first (works better on mobile)...');
-      try {
-        const result = await signInWithPopup(auth, googleProvider);
-        const user = result.user;
-        console.log('✅ Popup login SUCCESS:', user.email);
-        
-        // 로그인 성공 - onAuthStateChanged에서 처리됨
-        setShowLoginModal(false);
-        document.body.style.overflow = 'auto';
-        return;
-        
-      } catch (popupError: any) {
-        console.log('❌ Popup error:', popupError?.code, popupError?.message);
-        
-        // 사용자가 팝업을 닫은 경우 - 아무것도 하지 않음
-        if (popupError?.code === 'auth/popup-closed-by-user' || 
-            popupError?.code === 'auth/cancelled-popup-request') {
-          console.log('ℹ️ User closed popup, doing nothing');
-          return;
-        }
-        
-        // 팝업 차단된 경우에만 리디렉트로 폴백
-        if (popupError?.code === 'auth/popup-blocked') {
-          console.log('⚠️ Popup blocked, falling back to redirect...');
-          
-          // 리다이렉트 경로를 localStorage에 저장
-          if (redirectAfterLogin) {
-            console.log('💾 Saving to localStorage:', redirectAfterLogin);
-            localStorage.setItem('loginRedirect', redirectAfterLogin);
-          }
-          
-          try {
-            await signInWithRedirect(auth, googleProvider);
-            return;
-          } catch (redirectError: any) {
-            console.error('❌ Redirect also failed:', redirectError);
-            localStorage.removeItem('loginRedirect');
-            throw redirectError;
-          }
-        }
-        
-        // 다른 에러는 그대로 throw
-        throw popupError;
-      }
+      // 로그인 성공 - onAuthStateChanged에서 처리됨
+      setShowLoginModal(false);
+      document.body.style.overflow = 'auto';
+      
     } catch (error: any) {
-      console.error('로그인 실패:', error);
-      console.error('에러 코드:', error?.code);
-      console.error('에러 메시지:', error?.message);
+      console.error('❌ Login error:', error?.code, error?.message);
       
-      // 사용자가 팝업을 닫은 경우
-      if (error?.code === 'auth/popup-closed-by-user' || error?.code === 'auth/cancelled-popup-request') {
-        // 아무것도 하지 않음
-      } 
+      // 사용자가 팝업을 닫은 경우 - 무시
+      if (error?.code === 'auth/popup-closed-by-user' || 
+          error?.code === 'auth/cancelled-popup-request') {
+        console.log('ℹ️ User closed popup');
+        return;
+      }
+      
       // 승인되지 않은 도메인
-      else if (error?.code === 'auth/unauthorized-domain') {
+      if (error?.code === 'auth/unauthorized-domain') {
         alert('이 도메인은 Firebase 인증이 허용되지 않았습니다.\n\nFirebase Console > Authentication > Settings > Authorized domains에서\n현재 도메인을 추가해주세요.');
+        return;
       }
+      
+      // 팝업 차단 - 안내 메시지
+      if (error?.code === 'auth/popup-blocked') {
+        alert('팝업이 차단되었습니다.\n\n브라우저 설정에서 팝업을 허용해주세요.');
+        return;
+      }
+      
       // 기타 에러
-      else {
-        alert(`로그인 실패: ${error?.code || '알 수 없는 오류'}\n\n문제가 계속되면 관리자에게 문의해주세요.`);
-      }
+      alert(`로그인 실패: ${error?.code || '알 수 없는 오류'}`);
     } finally {
       setIsLoggingIn(false);
     }
