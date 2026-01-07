@@ -26,15 +26,20 @@ if (!isConfigured) {
 }
 
 // Initialize Firebase
+console.log('🔧 Initializing Firebase...');
 const app: FirebaseApp = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 const db: Firestore = getFirestore(app);
 const auth: Auth = getAuth(app);
 const googleProvider = new GoogleAuthProvider();
 
+console.log('✅ Firebase initialized');
+console.log('🔐 Auth domain:', firebaseConfig.authDomain);
+
 // Google Provider 설정 - 모바일 최적화
 googleProvider.setCustomParameters({
   prompt: 'select_account', // 계정 선택 화면 표시
-  display: 'popup' // 팝업 모드 우선
 });
+
+console.log('✅ Google Provider configured');
 
 export { app, db, auth, googleProvider };

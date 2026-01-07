@@ -75,98 +75,103 @@ function LandingPageContent() {
     };
   }, []);
 
-  // Firebase Auth persistence 설정 (앱 로드 시 한 번만)
-  useEffect(() => {
-    const initAuth = async () => {
-      try {
-        console.log('🔧 Initializing Firebase Auth...');
-        // localStorage persistence 설정 (모바일 포함)
-        await setPersistence(auth, browserLocalPersistence);
-        console.log('✅ Auth persistence set to LOCAL (browserLocalPersistence)');
-        
-        // 현재 사용자 확인
-        const currentUser = auth.currentUser;
-        if (currentUser) {
-          console.log('👤 Current user on init:', currentUser.email);
-        } else {
-          console.log('👤 No current user on init');
-        }
-      } catch (error) {
-        console.error('❌ Persistence 설정 실패:', error);
-        // localStorage가 안 되면 메모리만 사용
-        try {
-          await setPersistence(auth, inMemoryPersistence);
-          console.log('⚠️ Auth persistence set to MEMORY (localStorage unavailable)');
-        } catch (e) {
-          console.error('❌ Memory persistence도 실패:', e);
-        }
-      }
-    };
-    initAuth();
-  }, []);
-
-  // 리디렉트 로그인 결과 처리 (signInWithRedirect 사용 시)
+  // Firebase Auth 초기화 및 리디렉트 결과 처리 (순서 보장)
   useEffect(() => {
     let mounted = true;
-    const checkRedirectResult = async () => {
+    
+    const initAuthAndCheckRedirect = async () => {
       try {
-        console.log('🔍 Checking redirect result...');
+        // 1단계: Persistence 설정 (가장 먼저!)
+        console.log('🔧 Step 1: Setting up Firebase Auth persistence...');
+        await setPersistence(auth, browserLocalPersistence);
+        console.log('✅ Persistence set to LOCAL (browserLocalPersistence)');
+        
+        // 2단계: 리디렉트 결과 확인
+        console.log('🔍 Step 2: Checking redirect result...');
         const result = await getRedirectResult(auth);
         
         if (!mounted) {
-          console.log('⚠️ Component unmounted, skipping redirect result');
+          console.log('⚠️ Component unmounted, stopping');
           return;
         }
         
         if (result && result.user) {
-          console.log('✅ Redirect login success!');
-          console.log('📧 User email:', result.user.email);
-          console.log('🆔 User UID:', result.user.uid);
+          console.log('✅✅✅ REDIRECT LOGIN SUCCESS! ✅✅✅');
+          console.log('👤 User:', result.user.email);
+          console.log('🆔 UID:', result.user.uid);
+          console.log('📱 Provider:', result.providerId);
           
           // localStorage에서 리다이렉트 경로 확인
           const savedRedirect = localStorage.getItem('loginRedirect');
-          console.log('💾 Saved redirect path:', savedRedirect);
+          console.log('💾 Saved redirect path:', savedRedirect || 'none');
           
           if (savedRedirect) {
-            console.log('🔄 Redirecting to:', savedRedirect);
+            console.log('🔄 Will redirect to:', savedRedirect);
             localStorage.removeItem('loginRedirect');
+            
             // 약간의 지연 후 리다이렉트 (상태 업데이트 대기)
             setTimeout(() => {
+              console.log('▶️ Redirecting now to:', savedRedirect);
               router.push(savedRedirect);
-            }, 500);
+            }, 1000);
           } else {
+            console.log('ℹ️ No redirect path, staying on home');
             setShowLoginModal(false);
             document.body.style.overflow = 'auto';
           }
         } else {
-          console.log('ℹ️ No redirect result (normal page load)');
+          console.log('ℹ️ No redirect result (normal page load or direct visit)');
         }
-      } catch (err: any) {
+        
+        // 3단계: 현재 사용자 상태 확인
+        const currentUser = auth.currentUser;
+        if (currentUser) {
+          console.log('👤 Current user exists:', currentUser.email);
+        } else {
+          console.log('👤 No current user');
+        }
+        
+      } catch (error: any) {
         if (!mounted) return;
-        console.error('❌ Redirect login error:', err);
-        console.error('Error code:', err?.code);
-        console.error('Error message:', err?.message);
+        
+        console.error('❌ Auth initialization or redirect check failed:', error);
+        console.error('Error code:', error?.code);
+        console.error('Error message:', error?.message);
+        console.error('Error stack:', error?.stack);
         
         // 에러 발생 시 저장된 리다이렉트 제거
         localStorage.removeItem('loginRedirect');
         
-        if (err?.code === 'auth/unauthorized-domain') {
-          alert('이 도메인은 Firebase 인증이 허용되지 않았습니다. Firebase Console에서 도메인을 추가해주세요.');
-        } else if (err?.code) {
-          alert(`로그인 실패 (Redirect): ${err?.code}\n메시지: ${err?.message}`);
+        if (error?.code === 'auth/unauthorized-domain') {
+          alert('이 도메인은 Firebase 인증이 허용되지 않았습니다.\n\nFirebase Console > Authentication > Settings > Authorized domains에서\n현재 도메인을 추가해주세요.');
+        } else if (error?.code === 'auth/operation-not-allowed') {
+          alert('Google 로그인이 Firebase에서 활성화되지 않았습니다.\n\nFirebase Console > Authentication > Sign-in method에서\nGoogle을 활성화해주세요.');
+        } else if (error?.code) {
+          alert(`로그인 실패: ${error?.code}\n\n${error?.message}`);
+        }
+        
+        // localStorage 사용 불가 시 메모리 persistence로 대체
+        if (error?.message?.includes('localStorage')) {
+          try {
+            await setPersistence(auth, inMemoryPersistence);
+            console.log('⚠️ Fallback: Using memory persistence');
+          } catch (e) {
+            console.error('❌ Memory persistence도 실패:', e);
+          }
         }
       } finally {
         if (mounted) {
           setCheckingRedirect(false);
-          console.log('✅ Redirect check completed');
+          console.log('✅ Auth initialization completed');
         }
       }
     };
     
-    checkRedirectResult();
+    initAuthAndCheckRedirect();
+    
     return () => { 
       mounted = false;
-      console.log('🧹 Redirect check cleanup');
+      console.log('🧹 Auth init cleanup');
     };
   }, [router]);
 
@@ -291,49 +296,47 @@ function LandingPageContent() {
 
   // 구글 로그인
   const handleGoogleLogin = async () => {
-    if (isLoggingIn) return; // 이미 로그인 중이면 중복 호출 방지
+    if (isLoggingIn) {
+      console.log('⚠️ Already logging in, ignoring duplicate call');
+      return;
+    }
     
     setIsLoggingIn(true);
-    console.log('🚀 Starting Google login process...');
+    console.log('🚀 ========== STARTING GOOGLE LOGIN ==========');
     
     try {
-      // Persistence 확인 및 설정 (중요!)
-      console.log('🔧 Setting persistence...');
-      await setPersistence(auth, browserLocalPersistence);
-      console.log('✅ Persistence set to browserLocalPersistence');
-
       const isMobile = typeof navigator !== 'undefined' && /Mobi|Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
       const isIOS = typeof navigator !== 'undefined' && /iPhone|iPad|iPod/i.test(navigator.userAgent);
       console.log('📱 Device:', isMobile ? 'Mobile' : 'Desktop', isIOS ? '(iOS)' : '');
       console.log('🌐 User Agent:', navigator.userAgent);
+      console.log('🔄 Redirect after login:', redirectAfterLogin || 'none');
       
       let loginSuccess = false;
       
-      // 모바일(특히 iOS)에서는 바로 리디렉트 사용
+      // 모바일에서는 리디렉트 사용
       if (isMobile) {
-        console.log('📱 Using redirect login for mobile...');
+        console.log('📱 Using REDIRECT login for mobile...');
         
         // 리다이렉트 경로를 localStorage에 저장
         if (redirectAfterLogin) {
-          console.log('💾 Saving redirect:', redirectAfterLogin);
+          console.log('💾 Saving to localStorage:', redirectAfterLogin);
           localStorage.setItem('loginRedirect', redirectAfterLogin);
-        } else {
-          console.log('ℹ️ No redirect path to save');
+          console.log('✅ Saved successfully');
         }
         
         console.log('🔄 Calling signInWithRedirect...');
         await signInWithRedirect(auth, googleProvider);
-        console.log('✅ signInWithRedirect called (redirecting...)');
+        console.log('✅ signInWithRedirect called - will redirect to Google');
         // 리디렉트가 발생하므로 여기서 종료
         return;
       }
       
       // 데스크탑에서는 팝업 시도
+      console.log('🪟 Using POPUP login for desktop...');
       try {
-        console.log('🪟 Starting popup login...');
         const result = await signInWithPopup(auth, googleProvider);
         const user = result.user;
-        console.log('✅ Popup login success:', user.email);
+        console.log('✅ Popup login SUCCESS:', user.email);
         loginSuccess = true;
       } catch (popupError: any) {
         console.log('❌ Popup failed, trying redirect...', popupError?.code);
