@@ -21,26 +21,7 @@ interface Chat {
 }
 
 const chatInfo: { [key: string]: { name: string; avatar: string; field: string; company: string; status: string } } = {
-  '1': { name: '이원준', avatar: '👨‍🍳', field: '마케팅/식품 기획', company: 'CJ제일제당', status: '온라인' },
-  '2': { name: '김서현', avatar: '👩‍💻', field: 'SW개발', company: '삼성전자', status: '온라인' },
-  '3': { name: '박준혁', avatar: '👨‍💼', field: '경영기획', company: 'LG전자', status: '오프라인' },
-  '4': { name: '정다은', avatar: '👩‍🎨', field: 'UX/UI 디자인', company: '카카오', status: '온라인' },
-  '5': { name: '최민수', avatar: '👨‍🔬', field: 'R&D/연구개발', company: 'SK하이닉스', status: '온라인' },
-  '6': { name: '강유진', avatar: '👩‍💼', field: '인사/HR', company: '현대자동차', status: '온라인' },
-  '7': { name: '윤재석', avatar: '👨‍💻', field: '백엔드 개발', company: '네이버', status: '오프라인' },
-  '8': { name: '송하늘', avatar: '👩‍🏭', field: '생산관리', company: 'LG화학', status: '온라인' },
-  '9': { name: '임동현', avatar: '👨‍💼', field: '재무/회계', company: 'SK이노베이션', status: '온라인' },
-  '10': { name: '한서윤', avatar: '👩‍🔬', field: '품질관리', company: 'CJ제일제당', status: '온라인' },
-  '11': { name: '오진우', avatar: '👨‍💻', field: '데이터 분석', company: '쿠팡', status: '오프라인' },
-  '12': { name: '배수진', avatar: '👩‍💼', field: '영업/Sales', company: '삼성전자', status: '온라인' },
-  '13': { name: '서준호', avatar: '👨‍🎓', field: '마케팅', company: '아모레퍼시픽', status: '온라인' },
-  '14': { name: '안지혜', avatar: '👩‍💻', field: 'AI/머신러닝', company: 'LG AI연구원', status: '온라인' },
-  '15': { name: '조민기', avatar: '👨‍🏭', field: '공정엔지니어', company: '현대제철', status: '오프라인' },
-  '16': { name: '홍민지', avatar: '👩‍💼', field: '전략기획', company: '카카오뱅크', status: '온라인' },
-  '17': { name: '신동욱', avatar: '👨‍💻', field: '보안/인프라', company: 'NHN', status: '온라인' },
-  '18': { name: '유채원', avatar: '👩‍🎨', field: '콘텐츠 기획', company: 'HYBE', status: '온라인' },
-  '19': { name: '전승현', avatar: '👨‍🔧', field: '설비엔지니어', company: '삼성SDI', status: '오프라인' },
-  '20': { name: '권나연', avatar: '👩‍💼', field: '구매/SCM', company: 'SK텔레콤', status: '온라인' },
+  '1': { name: '마감히어로', avatar: '/magam-hero-logo.svg', field: '지역 기반 마감 할인 플랫폼', company: '주식회사 마히(MAHI)', status: '온라인' },
 };
 
 export default function ChatsPage() {

@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { useState, useCallback } from 'react';
 
 export const dynamic = 'force-dynamic';
@@ -20,47 +21,14 @@ interface Mentor {
 const mentors: Mentor[] = [
   {
     id: 1,
-    name: '김멘토',
-    age: 32,
-    field: '프론트엔드 개발',
-    company: '네이버',
-    experience: '10년',
-    description: '네이버에서 10년간 프론트엔드 개발을 해왔습니다. React, Next.js 전문가입니다.',
-    avatar: '👨‍💻',
-    tags: ['React', 'Next.js', 'TypeScript'],
-  },
-  {
-    id: 2,
-    name: '이멘토',
-    age: 29,
-    field: 'UX/UI 디자인',
-    company: '카카오',
-    experience: '7년',
-    description: '카카오에서 다양한 서비스의 UX/UI를 디자인했습니다. 사용자 중심 디자인을 추구합니다.',
-    avatar: '👩‍🎨',
-    tags: ['Figma', 'UX Research', 'Design System'],
-  },
-  {
-    id: 3,
-    name: '박멘토',
-    age: 35,
-    field: '백엔드 개발',
-    company: '토스',
-    experience: '12년',
-    description: '토스에서 대규모 트래픽 처리 경험이 있습니다. 시스템 아키텍처 전문가입니다.',
-    avatar: '👨‍💼',
-    tags: ['Java', 'Spring', 'MSA'],
-  },
-  {
-    id: 4,
-    name: '최멘토',
-    age: 28,
-    field: '데이터 분석',
-    company: '쿠팡',
-    experience: '6년',
-    description: '쿠팡에서 데이터 분석과 머신러닝 모델을 개발합니다. Python과 SQL 전문가입니다.',
-    avatar: '👩‍💻',
-    tags: ['Python', 'SQL', 'Machine Learning'],
+    name: '마감히어로',
+    age: 0,
+    field: '지역 기반 마감 할인 플랫폼',
+    company: '주식회사 마히(MAHI)',
+    experience: '소셜벤처',
+    description: '마감히어로는 동네 상점의 마감 할인 정보를 실시간으로 제공하는 지역 기반 플랫폼입니다. 음식물 폐기를 줄여 환경을 보호하고, 소상공인에게는 추가 수익을, 소비자에게는 알뜰한 쇼핑 기회를 제공합니다. 중소벤처기업부 예비창업패키지 선정, 학생창업유망팀 300+ 최종 선발 등 검증된 소셜벤처입니다.',
+    avatar: '/magam-hero-logo.svg',
+    tags: ['환경보호', 'ESG', '지역경제', '가치소비'],
   },
 ];
 
@@ -120,8 +88,17 @@ export default function Home() {
             <div className="bg-white rounded-3xl shadow-xl h-full flex flex-col overflow-hidden">
               {/* 프로필 상단 */}
               <div className="p-8 flex flex-col items-center border-b border-gray-100">
-                <div className="w-28 h-28 bg-gray-800 rounded-full flex items-center justify-center text-6xl mb-4 shadow-lg">
-                  {currentMentor.avatar}
+                <div className="w-28 h-28 bg-blue-600 rounded-full flex items-center justify-center mb-4 shadow-lg overflow-hidden relative">
+                  {currentMentor.avatar.startsWith('/') ? (
+                    <Image
+                      src={currentMentor.avatar}
+                      alt={currentMentor.name}
+                      fill
+                      className="object-cover"
+                    />
+                  ) : (
+                    <span className="text-6xl">{currentMentor.avatar}</span>
+                  )}
                 </div>
                 <h2 className="text-2xl font-bold text-gray-900">{currentMentor.name}</h2>
                 <p className="text-gray-500 mt-1">{currentMentor.field}</p>
